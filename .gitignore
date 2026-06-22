@@ -7,3 +7,5 @@ server/tmp
 
 # Autre projet, ne pas suivre ici
 business-plan-generator/
+
+.DS_Store

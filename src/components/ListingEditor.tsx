@@ -61,12 +61,12 @@ export function ListingEditor({
             <option value="neuf">Neuf — {settings.notaryRateNew}% de notaire</option>
           </select>
         </label>
-        <label className="text-sm">
-          <span className="text-slate-600">Frais de notaire (%)</span>
-          <input type="number" step="0.1" className="mt-1 w-full border rounded-lg px-3 py-2"
-            value={listing.notaryRate}
-            onChange={(e) => set({ notaryRate: Number(e.target.value) })} />
-        </label>
+        <div className="text-sm">
+          <span className="text-slate-600">Frais de notaire</span>
+          <div className="mt-1 w-full border rounded-lg px-3 py-2 bg-slate-50 text-slate-500">
+            {listing.notaryRate}% <span className="text-slate-400">— figé ({listing.isNewBuild ? 'neuf' : 'ancien'})</span>
+          </div>
+        </div>
         <label className="text-sm col-span-2">
           <span className="text-slate-600">Commission (auto, modifiable €)</span>
           <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
