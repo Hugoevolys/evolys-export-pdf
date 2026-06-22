@@ -1,8 +1,30 @@
 import puppeteer from 'puppeteer';
+import sharp from 'sharp';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { GeneralInfo, Listing, Settings } from '../src/types/index.ts';
 import { computeGlobalCost } from './notaryFees.ts';
+
+/** Largeur max des photos dans le PDF : net en A4 tout en restant léger à rendre. */
+const PHOTO_MAX_WIDTH = 1600;
+
+/**
+ * Redimensionne une photo (max 1600px, auto-orientée via EXIF) en data URI JPEG.
+ * Allège fortement le rendu Puppeteer (CPU/mémoire) sans perte visible à l'impression.
+ */
+async function photoDataUri(p: string): Promise<string> {
+  if (!p || !fs.existsSync(p)) return '';
+  try {
+    const buf = await sharp(p)
+      .rotate() // applique l'orientation EXIF (photos prises au téléphone)
+      .resize({ width: PHOTO_MAX_WIDTH, withoutEnlargement: true })
+      .jpeg({ quality: 82 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${buf.toString('base64')}`;
+  } catch {
+    return fileDataUri(p); // repli : image brute si sharp échoue
+  }
+}
 
 const euro = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
@@ -18,9 +40,13 @@ function logoDataUri(): string {
   return fileDataUri(path.join(process.cwd(), 'server/assets/evolys-logo.png'));
 }
 
-function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: string): string {
+function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: string, photoUris: Map<string, string>): string {
   const c = computeGlobalCost(l, s);
-  const photos = l.photos.map((ph) => `<img class="photo" src="${fileDataUri(ph)}"/>`).join('');
+  const photos = l.photos
+    .map((ph) => photoUris.get(ph))
+    .filter(Boolean)
+    .map((uri) => `<img class="photo" src="${uri}"/>`)
+    .join('');
   const features = l.features.map((f) => `<span class="chip">${f}</span>`).join('');
   const negoLine =
     c.negotiationFee != null
@@ -50,7 +76,7 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
   </section>`;
 }
 
-export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings): string {
+export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings, photoUris: Map<string, string>): string {
   const logo = logoDataUri();
   const date = new Date().toLocaleDateString('fr-FR');
   const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
@@ -89,13 +115,18 @@ export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings): 
         ${info.advisorPhone} — ${info.advisorEmail}<br/>${date}
       </div>
     </div>
-    ${listings.map((l, i) => listingHtml(l, i + 1, s, info.advisorFirstName)).join('')}
+    ${listings.map((l, i) => listingHtml(l, i + 1, s, info.advisorFirstName, photoUris)).join('')}
     <div class="footer">${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys</div>
   </body></html>`;
 }
 
 export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Settings): Promise<Buffer> {
-  const html = buildHtml(info, listings, s);
+  // Pré-calcule les data URIs des photos (redimensionnées) une seule fois chacune.
+  const uniquePaths = [...new Set(listings.flatMap((l) => l.photos))];
+  const entries = await Promise.all(uniquePaths.map(async (p) => [p, await photoDataUri(p)] as const));
+  const photoUris = new Map(entries);
+
+  const html = buildHtml(info, listings, s, photoUris);
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -103,7 +134,13 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
   });
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // Images en data URI (aucun réseau) ; 'load' + timeout large = robuste sur conteneur limité.
+    await page.setContent(html, { waitUntil: 'load', timeout: 120000 });
+    // Attend le chargement des polices Google Fonts, borné pour ne jamais bloquer.
+    await Promise.race([
+      page.evaluate(() => (document as any).fonts?.ready),
+      new Promise((r) => setTimeout(r, 5000)),
+    ]).catch(() => {});
     return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
   } finally {
     await browser.close();
