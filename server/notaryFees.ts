@@ -10,13 +10,10 @@ export function computeGlobalCost(l: Listing, s: Settings): CostBreakdown {
   const commission = computeCommission(l, s);
   const base = s.notaryBase === 'net_plus_commission' ? l.netSellerPrice + commission : l.netSellerPrice;
   const notary = (base * l.notaryRate) / 100;
-  const negotiationFee =
-    l.negotiationAmount != null ? (l.negotiationAmount * s.negotiationRate) / 100 : undefined;
   return {
     netSellerPrice: l.netSellerPrice,
     commission,
     notary,
     total: l.netSellerPrice + commission + notary,
-    negotiationFee,
   };
 }

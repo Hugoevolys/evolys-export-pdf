@@ -70,7 +70,7 @@ export async function extractListing(raw: RawListing): Promise<Listing> {
     netSellerPrice: data.netSellerPrice ?? 0,
     isNewBuild: Boolean(data.isNewBuild),
     mandateType: 'simple',
-    notaryRate: data.isNewBuild ? 3 : 8,
+    notaryRate: data.isNewBuild ? 3 : 8.5,
     advisorComment: '',
     photos: [], // chemins remplis depuis l'extraction PDF
   };

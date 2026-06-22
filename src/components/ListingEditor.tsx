@@ -49,24 +49,31 @@ export function ListingEditor({
           </select>
         </label>
         <label className="text-sm">
+          <span className="text-slate-600">Type de bien</span>
+          <select className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.isNewBuild ? 'neuf' : 'ancien'}
+            onChange={(e) => {
+              const neuf = e.target.value === 'neuf';
+              // Bascule le type ET applique le taux de notaire par défaut correspondant.
+              set({ isNewBuild: neuf, notaryRate: neuf ? settings.notaryRateNew : settings.notaryRate });
+            }}>
+            <option value="ancien">Ancien — {settings.notaryRate}% de notaire</option>
+            <option value="neuf">Neuf — {settings.notaryRateNew}% de notaire</option>
+          </select>
+        </label>
+        <label className="text-sm">
           <span className="text-slate-600">Frais de notaire (%)</span>
-          <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
+          <input type="number" step="0.1" className="mt-1 w-full border rounded-lg px-3 py-2"
             value={listing.notaryRate}
             onChange={(e) => set({ notaryRate: Number(e.target.value) })} />
         </label>
-        <label className="text-sm">
+        <label className="text-sm col-span-2">
           <span className="text-slate-600">Commission (auto, modifiable €)</span>
           <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
             placeholder={String(Math.round(autoCommission))}
             value={listing.commissionOverride ?? ''}
             onChange={(e) => set({ commissionOverride: e.target.value === '' ? undefined : Number(e.target.value) })} />
           <span className="text-xs text-slate-400">Auto = max({m.rate}% × prix, {euro(m.floor)}) = {euro(autoCommission)}</span>
-        </label>
-        <label className="text-sm col-span-2">
-          <span className="text-slate-600">Montant négocié (€) — optionnel, pour la ligne 20% (indicatif)</span>
-          <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
-            value={listing.negotiationAmount ?? ''}
-            onChange={(e) => set({ negotiationAmount: e.target.value === '' ? undefined : Number(e.target.value) })} />
         </label>
       </div>
 
@@ -76,10 +83,6 @@ export function ListingEditor({
         <div className="flex justify-between"><span>Frais de notaire (est.)</span><span>{euro(cost.notary)}</span></div>
         <div className="flex justify-between font-semibold text-evolys border-t mt-1 pt-1">
           <span>COÛT GLOBAL</span><span>{euro(cost.total)}</span>
-        </div>
-        <div className="flex justify-between text-xs text-slate-400 italic mt-1">
-          <span>Honoraires de négociation (20%, indicatif)</span>
-          <span>{cost.negotiationFee != null ? euro(cost.negotiationFee) : '20% du montant négocié'}</span>
         </div>
       </div>
 

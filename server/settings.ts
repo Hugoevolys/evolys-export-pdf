@@ -5,10 +5,9 @@ export const defaultSettings: Settings = {
     simple: { rate: 4, floor: 5000 },
     exclusif: { rate: 3, floor: 4000 },
   },
-  notaryRate: 8,
-  notaryRateNew: 3,
+  notaryRate: 8.5, // ancien
+  notaryRateNew: 3, // neuf
   notaryBase: 'net',
-  negotiationRate: 20, // 20% du montant négocié (ligne informative)
 };
 
 let current: Settings = JSON.parse(JSON.stringify(defaultSettings));

@@ -60,10 +60,6 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
     .map((uri) => `<img class="photo" src="${uri}"/>`)
     .join('');
   const features = l.features.map((f) => `<span class="chip">${f}</span>`).join('');
-  const negoLine =
-    c.negotiationFee != null
-      ? `<tr class="nego"><td>Honoraires de négociation (20% du montant négocié, indicatif)</td><td>${euro(c.negotiationFee)}</td></tr>`
-      : `<tr class="nego"><td colspan="2">Honoraires de négociation : 20% du montant négocié</td></tr>`;
 
   return `
   <section class="listing">
@@ -82,7 +78,6 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
       <tr><td>Commission Evolys</td><td>${euro(c.commission)}</td></tr>
       <tr><td>Frais de notaire (est.)</td><td>${euro(c.notary)}</td></tr>
       <tr class="total"><td>COÛT GLOBAL</td><td>${euro(c.total)}</td></tr>
-      ${negoLine}
     </table>
     ${l.advisorComment ? `<div class="comment"><strong>Le commentaire de votre conseiller ${advisorFirstName} :</strong> ${l.advisorComment}</div>` : ''}
   </section>`;
@@ -107,7 +102,6 @@ const PAGE_STYLE = `
     table.cost td { padding: 6px 8px; border-bottom: 1px solid #e3e9ee; }
     table.cost td:last-child { text-align: right; }
     table.cost .total td { font-weight: 700; color: #00286E; border-top: 2px solid #00286E; border-bottom: none; font-size: 16px; }
-    table.cost .nego td { font-size: 12px; color: #44566b; font-style: italic; }
     .comment { margin-top: 12px; font-size: 13px; background: #f7f9fb; border-left: 3px solid #FF9A41; padding: 8px 12px; }
     .footer { position: fixed; bottom: 6mm; left: 0; right: 0; text-align: center; font-size: 11px; color: #6b7a89; }`;
 

@@ -29,10 +29,7 @@ export interface Listing {
   mandateType: MandateType;
   commissionOverride?: number; // force le montant € si renseigné
   notaryRate: number;          // % frais de notaire
-  isNewBuild: boolean;
-
-  /** Montant négocié (€). Optionnel. Sert à la ligne informative 20% (non ajoutée au total). */
-  negotiationAmount?: number;
+  isNewBuild: boolean;         // neuf (3%) vs ancien (8,5%)
 
   advisorComment: string;
   /** Chemins des photos source (insérées telles quelles, non modifiées). */
@@ -46,16 +43,14 @@ export interface MandateRate {
 
 export interface Settings {
   mandates: Record<MandateType, MandateRate>;
-  notaryRate: number;     // % ancien
-  notaryRateNew: number;  // % neuf
+  notaryRate: number;     // % ancien (8,5)
+  notaryRateNew: number;  // % neuf (3)
   notaryBase: 'net' | 'net_plus_commission';
-  negotiationRate: number; // % sur le montant négocié (informatif), ex. 20
 }
 
 export interface CostBreakdown {
   netSellerPrice: number;
   commission: number;
   notary: number;
-  total: number;          // prix net + commission + notaire (négociation NON incluse)
-  negotiationFee?: number; // informatif uniquement
+  total: number;          // prix net + commission + notaire
 }
