@@ -42,7 +42,7 @@ export default function App() {
     setListings((prev) => prev.filter((l) => l.id !== id));
 
   async function handleExport() {
-    setLoading(true);
+    setLoading(true); setError('');
     try {
       const blob = await generatePdf(info, listings);
       const url = URL.createObjectURL(blob);
@@ -86,7 +86,7 @@ export default function App() {
                     ? <Loader2 className="h-7 w-7 animate-spin text-evolys" />
                     : <Upload className="h-7 w-7 text-evolys" />}
                 </div>
-                <div className="font-title text-lg text-evolys">Déposer vos annonces moteur immo</div>
+                <div className="font-title text-lg text-evolys">Déposer vos exports PDF MoteurImmo</div>
                 <div className="text-sm text-slate-500 mt-1">Fichiers PDF — un ou plusieurs à la fois</div>
                 <div className="text-xs text-slate-400 mt-3 max-w-sm mx-auto leading-relaxed">
                   {loading
