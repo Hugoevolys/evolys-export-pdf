@@ -6,8 +6,13 @@ import * as path from 'node:path';
 import type { GeneralInfo, Listing, Settings } from '../src/types/index.ts';
 import { computeGlobalCost } from './notaryFees.ts';
 
-/** Largeur max des photos dans le PDF : net en A4 tout en restant léger à rendre. */
-const PHOTO_MAX_WIDTH = 1600;
+/**
+ * Largeur max des photos dans le PDF. 1000px = parfaitement net à l'écran (usage =
+ * téléchargement/visionnage, pas d'impression) tout en bornant la mémoire de rendu
+ * pour tenir sur un conteneur 512 Mo même à 150+ photos.
+ */
+const PHOTO_MAX_WIDTH = 1000;
+const PHOTO_QUALITY = 78;
 
 /**
  * Redimensionne une photo (max 1600px, auto-orientée via EXIF) en data URI JPEG.
@@ -19,7 +24,7 @@ async function photoDataUri(p: string): Promise<string> {
     const buf = await sharp(p)
       .rotate() // applique l'orientation EXIF (photos prises au téléphone)
       .resize({ width: PHOTO_MAX_WIDTH, withoutEnlargement: true })
-      .jpeg({ quality: 82 })
+      .jpeg({ quality: PHOTO_QUALITY })
       .toBuffer();
     return `data:image/jpeg;base64,${buf.toString('base64')}`;
   } catch {
