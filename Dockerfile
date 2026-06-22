@@ -1,9 +1,10 @@
 # Backend Evolys Export PDF — Node + Python (PyMuPDF) + Chromium (Puppeteer)
 FROM node:20-bookworm-slim
 
-# Dépendances système : Python (lecture PDF) + Chromium (génération PDF)
+# Dépendances système : Python (lecture PDF) + Chromium (génération PDF) + poppler (fusion PDF)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip \
+    poppler-utils \
     chromium ca-certificates fonts-liberation \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 \

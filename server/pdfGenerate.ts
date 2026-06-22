@@ -2,9 +2,15 @@ import puppeteer from 'puppeteer';
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { GeneralInfo, Listing, Settings } from '../src/types/index.ts';
 import { computeGlobalCost } from './notaryFees.ts';
+
+const execFileAsync = promisify(execFile);
+sharp.cache(false); // pas de cache libvips : empreinte mémoire constante sur 150+ photos
 
 /**
  * Largeur max des photos dans le PDF. 1000px = parfaitement net à l'écran (usage =
@@ -126,20 +132,10 @@ function coverHtml(info: GeneralInfo): string {
     </div>`;
 }
 
-/**
- * Rend un fragment HTML en buffer PDF dans un navigateur NEUF, fermé juste après.
- * Relancer le navigateur à chaque section garantit que tout le système récupère la
- * mémoire entre les annonces (fermer une simple page ne libère pas le cache du process
- * Chromium, qui finissait par dépasser les 512 Mo → 502).
- */
-async function renderSection(html: string): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-  });
+/** Rend un fragment HTML en buffer PDF (une page neuve, fermée après pour libérer sa mémoire). */
+async function renderSection(browser: import('puppeteer').Browser, html: string): Promise<Buffer> {
+  const page = await browser.newPage();
   try {
-    const page = await browser.newPage();
     // Images en data URI (aucun réseau) ; 'load' + timeout large = robuste sur conteneur limité.
     await page.setContent(html, { waitUntil: 'load', timeout: 120000 });
     // Attend le chargement des polices Google Fonts, borné pour ne jamais bloquer.
@@ -149,7 +145,28 @@ async function renderSection(html: string): Promise<Buffer> {
     ]).catch(() => {});
     return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
   } finally {
-    await browser.close(); // ferme TOUT le navigateur → mémoire entièrement reclamée
+    await page.close();
+  }
+}
+
+/**
+ * Fusionne des PDF déjà sur disque en un seul fichier.
+ * Priorité à `pdfunite` (poppler) : outil C qui assemble en streaming, mémoire quasi
+ * nulle → tient à 150+ photos sur un conteneur 512 Mo. Repli `pdf-lib` si pdfunite
+ * est absent (ex. dev local), acceptable car la RAM y est large.
+ */
+async function mergePdfs(files: string[], outFile: string): Promise<Buffer> {
+  try {
+    await execFileAsync('pdfunite', [...files, outFile]);
+    return fs.readFileSync(outFile);
+  } catch {
+    const merged = await PDFDocument.create();
+    for (const f of files) {
+      const doc = await PDFDocument.load(fs.readFileSync(f));
+      const pages = await merged.copyPages(doc, doc.getPageIndices());
+      pages.forEach((p) => merged.addPage(p));
+    }
+    return Buffer.from(await merged.save());
   }
 }
 
@@ -157,26 +174,38 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
   const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
   const footer = `${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys`;
 
-  // Rendu SECTION PAR SECTION dans un navigateur neuf à chaque fois : le pic mémoire
-  // ne dépasse jamais une annonce → tient sur un conteneur 512 Mo même à 150+ photos.
-  const buffers: Buffer[] = [];
-  buffers.push(await renderSection(wrapDocument(coverHtml(info), footer)));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'evolys-pdf-'));
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+  });
 
-  for (let i = 0; i < listings.length; i++) {
-    const l = listings[i];
-    // Photos de CETTE annonce uniquement, redimensionnées juste avant son rendu.
-    const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
-    const photoUris = new Map(entries);
-    const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
-    buffers.push(await renderSection(wrapDocument(section, footer)));
-  }
+  try {
+    // Chaque section (couverture + chaque annonce) est rendue puis écrite sur DISQUE,
+    // jamais accumulée en RAM. La fusion finale se fait sur disque (pdfunite). Résultat :
+    // le pic mémoire ne dépasse jamais une seule annonce, quel que soit le nombre total.
+    const files: string[] = [];
+    const writeSection = (idx: number, buf: Buffer) => {
+      const fp = path.join(tmpDir, `s${String(idx).padStart(3, '0')}.pdf`);
+      fs.writeFileSync(fp, buf);
+      files.push(fp);
+    };
 
-  // Fusionne tous les PDF de section en un seul document.
-  const merged = await PDFDocument.create();
-  for (const buf of buffers) {
-    const doc = await PDFDocument.load(buf);
-    const pages = await merged.copyPages(doc, doc.getPageIndices());
-    pages.forEach((p) => merged.addPage(p));
+    writeSection(0, await renderSection(browser, wrapDocument(coverHtml(info), footer)));
+
+    for (let i = 0; i < listings.length; i++) {
+      const l = listings[i];
+      // Photos de CETTE annonce uniquement, redimensionnées juste avant son rendu.
+      const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
+      const photoUris = new Map(entries);
+      const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
+      writeSection(i + 1, await renderSection(browser, wrapDocument(section, footer)));
+    }
+
+    return await mergePdfs(files, path.join(tmpDir, 'merged.pdf'));
+  } finally {
+    await browser.close();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
-  return Buffer.from(await merged.save());
 }
