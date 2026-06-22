@@ -18,9 +18,9 @@ function logoDataUri(): string {
   return fileDataUri(path.join(process.cwd(), 'server/assets/evolys-logo.png'));
 }
 
-function listingHtml(l: Listing, index: number, s: Settings): string {
+function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: string): string {
   const c = computeGlobalCost(l, s);
-  const photos = l.photos.slice(0, 6).map((ph) => `<img class="photo" src="${fileDataUri(ph)}"/>`).join('');
+  const photos = l.photos.map((ph) => `<img class="photo" src="${fileDataUri(ph)}"/>`).join('');
   const features = l.features.map((f) => `<span class="chip">${f}</span>`).join('');
   const negoLine =
     c.negotiationFee != null
@@ -46,7 +46,7 @@ function listingHtml(l: Listing, index: number, s: Settings): string {
       <tr class="total"><td>COÛT GLOBAL</td><td>${euro(c.total)}</td></tr>
       ${negoLine}
     </table>
-    ${l.advisorComment ? `<div class="comment"><strong>Commentaire du conseiller :</strong> ${l.advisorComment}</div>` : ''}
+    ${l.advisorComment ? `<div class="comment"><strong>Le commentaire de votre conseiller ${advisorFirstName} :</strong> ${l.advisorComment}</div>` : ''}
   </section>`;
 }
 
@@ -69,8 +69,8 @@ export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings): 
     .listing { page-break-before: always; }
     h2 { color: #00286E; font-size: 20px; margin-bottom: 2px; }
     .loc { color: #44566b; margin-bottom: 10px; }
-    .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
-    .photo { width: 100%; height: 110px; object-fit: cover; border-radius: 6px; }
+    .gallery { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .photo { width: 100%; height: auto; border-radius: 8px; break-inside: avoid; page-break-inside: avoid; }
     .specs span, .chip { display: inline-block; background: #DDF3FF; border-radius: 4px; padding: 3px 8px; margin: 2px; font-size: 12px; }
     .desc { font-size: 13px; line-height: 1.5; margin: 12px 0; }
     table.cost { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -89,7 +89,7 @@ export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings): 
         ${info.advisorPhone} — ${info.advisorEmail}<br/>${date}
       </div>
     </div>
-    ${listings.map((l, i) => listingHtml(l, i + 1, s)).join('')}
+    ${listings.map((l, i) => listingHtml(l, i + 1, s, info.advisorFirstName)).join('')}
     <div class="footer">${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys</div>
   </body></html>`;
 }

@@ -3,7 +3,7 @@ import type { GeneralInfo, Listing, Settings } from '@/types';
 import { uploadPdf, generatePdf, getSettings } from '@/lib/api';
 import { GeneralInfoForm } from '@/components/GeneralInfoForm';
 import { ListingEditor } from '@/components/ListingEditor';
-import { Upload, Loader2, FileDown } from 'lucide-react';
+import { Upload, Loader2, FileDown, X, ArrowRight } from 'lucide-react';
 
 type Step = 'upload' | 'general' | 'listings' | 'done';
 
@@ -23,18 +23,23 @@ export default function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   useEffect(() => { getSettings().then(setSettings).catch(() => {}); }, []);
 
-  async function handleUpload(file: File) {
+  async function handleAddFiles(files: FileList) {
     setLoading(true); setError('');
     try {
-      const res = await uploadPdf(file);
-      setListings(res.listings);
-      setStep('general');
+      // Traite chaque document déposé et cumule les annonces extraites.
+      for (const file of Array.from(files)) {
+        const res = await uploadPdf(file);
+        setListings((prev) => [...prev, ...res.listings]);
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
   }
+
+  const removeListing = (id: string) =>
+    setListings((prev) => prev.filter((l) => l.id !== id));
 
   async function handleExport() {
     setLoading(true);
@@ -55,22 +60,89 @@ export default function App() {
     setListings((prev) => prev.map((x, i) => (i === current ? l : x)));
 
   return (
-    <div className="min-h-screen p-6">
-      <header className="max-w-3xl mx-auto mb-6 flex items-center gap-2">
-        <h1 className="text-2xl font-bold text-evolys">Evolys — Export PDF Annonces</h1>
+    <div className="min-h-screen p-6 bg-gradient-to-b from-evolys-light/40 via-slate-50 to-slate-50">
+      <header className="max-w-3xl mx-auto mb-8 flex items-center justify-between">
+        <img src="/evolys-logo.svg" alt="Evolys" className="h-11" />
+        <span className="text-xs font-medium uppercase tracking-wider text-evolys/60">Export PDF Annonces</span>
       </header>
 
       {error && <div className="max-w-3xl mx-auto mb-4 bg-red-50 text-red-700 rounded-lg p-3">{error}</div>}
 
       <main className="max-w-3xl mx-auto">
         {step === 'upload' && (
-          <label className="block bg-white rounded-xl shadow p-10 text-center cursor-pointer border-2 border-dashed">
-            {loading ? <Loader2 className="mx-auto animate-spin" /> : <Upload className="mx-auto mb-3 text-evolys" />}
-            <div className="font-medium">Déposer le PDF moteur immo</div>
-            <div className="text-sm text-slate-500">Multi-annonces accepté</div>
-            <input type="file" accept="application/pdf" className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-          </label>
+          <div>
+            <div className="text-center mb-8">
+              <h1 className="font-title text-3xl text-evolys mb-2">Créez votre sélection de biens</h1>
+              <p className="text-slate-500">
+                Déposez vos annonces moteur immo : l'outil les nettoie et génère un PDF client à votre image.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-lg shadow-evolys/5 ring-1 ring-slate-100 p-8">
+              <label className={`group block rounded-2xl p-10 text-center cursor-pointer border-2 border-dashed transition-all
+                ${loading ? 'border-evolys bg-evolys-light/30' : 'border-slate-200 hover:border-evolys hover:bg-evolys-light/20'}`}>
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-evolys-light flex items-center justify-center transition-transform group-hover:scale-105">
+                  {loading
+                    ? <Loader2 className="h-7 w-7 animate-spin text-evolys" />
+                    : <Upload className="h-7 w-7 text-evolys" />}
+                </div>
+                <div className="font-title text-lg text-evolys">Déposer vos annonces moteur immo</div>
+                <div className="text-sm text-slate-500 mt-1">Fichiers PDF — un ou plusieurs à la fois</div>
+                <div className="text-xs text-slate-400 mt-3 max-w-sm mx-auto leading-relaxed">
+                  {loading
+                    ? 'Extraction en cours… (≈ 30 s par document)'
+                    : 'Vous pouvez ajouter vos documents en plusieurs fois. Chaque PDF est découpé automatiquement en annonces.'}
+                </div>
+                <input type="file" accept="application/pdf" multiple className="hidden" disabled={loading}
+                  onChange={(e) => {
+                    if (e.target.files?.length) handleAddFiles(e.target.files);
+                    e.target.value = '';
+                  }} />
+              </label>
+
+              {/* Compteur + liste des annonces importées */}
+              <div className="mt-6 flex items-center gap-3">
+                <div className={`inline-flex items-center gap-2 font-semibold rounded-full px-4 py-2 transition-colors
+                  ${listings.length ? 'bg-evolys text-white' : 'bg-slate-100 text-slate-400'}`}>
+                  <span className="text-lg leading-none">{listings.length}</span>
+                  <span className="text-sm">annonce{listings.length > 1 ? 's' : ''} importée{listings.length > 1 ? 's' : ''}</span>
+                </div>
+                {listings.length > 0 && (
+                  <span className="text-sm text-slate-400">Vérifiez la liste avant de continuer</span>
+                )}
+              </div>
+
+              {listings.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {listings.map((l, i) => (
+                    <li key={l.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm">
+                      <span className="truncate flex items-center gap-3">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-evolys text-white text-xs shrink-0">{i + 1}</span>
+                        <span className="truncate">
+                          <span className="font-medium text-slate-700">{l.title}</span>
+                          <span className="text-slate-400"> — {l.city} {l.postalCode}</span>
+                        </span>
+                      </span>
+                      <button onClick={() => removeListing(l.id)}
+                        className="ml-3 text-slate-300 hover:text-red-500 shrink-0 transition-colors" title="Retirer cette annonce">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <button
+                disabled={listings.length === 0 || loading}
+                onClick={() => setStep('general')}
+                className="mt-6 w-full px-4 py-3.5 rounded-xl bg-evolys text-white font-medium shadow-sm
+                  hover:bg-evolys-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                  flex items-center justify-center gap-2">
+                J'ai fini de déposer mes annonces moteur immo
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         )}
 
         {step === 'general' && (
