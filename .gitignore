@@ -4,3 +4,6 @@ dist
 server/uploads
 server/tmp
 *.log
+
+# Autre projet, ne pas suivre ici
+business-plan-generator/
