@@ -121,10 +121,20 @@ function coverHtml(info: GeneralInfo): string {
     </div>`;
 }
 
-/** Rend un fragment HTML en buffer PDF (une page neuve, fermée après pour libérer la mémoire). */
-async function renderSection(browser: import('puppeteer').Browser, html: string): Promise<Buffer> {
-  const page = await browser.newPage();
+/**
+ * Rend un fragment HTML en buffer PDF dans un navigateur NEUF, fermé juste après.
+ * Relancer le navigateur à chaque section garantit que tout le système récupère la
+ * mémoire entre les annonces (fermer une simple page ne libère pas le cache du process
+ * Chromium, qui finissait par dépasser les 512 Mo → 502).
+ */
+async function renderSection(html: string): Promise<Buffer> {
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+  });
   try {
+    const page = await browser.newPage();
     // Images en data URI (aucun réseau) ; 'load' + timeout large = robuste sur conteneur limité.
     await page.setContent(html, { waitUntil: 'load', timeout: 120000 });
     // Attend le chargement des polices Google Fonts, borné pour ne jamais bloquer.
@@ -134,7 +144,7 @@ async function renderSection(browser: import('puppeteer').Browser, html: string)
     ]).catch(() => {});
     return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
   } finally {
-    await page.close(); // libère la mémoire (images décodées) avant la section suivante
+    await browser.close(); // ferme TOUT le navigateur → mémoire entièrement reclamée
   }
 }
 
@@ -142,36 +152,26 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
   const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
   const footer = `${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys`;
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-  });
+  // Rendu SECTION PAR SECTION dans un navigateur neuf à chaque fois : le pic mémoire
+  // ne dépasse jamais une annonce → tient sur un conteneur 512 Mo même à 150+ photos.
+  const buffers: Buffer[] = [];
+  buffers.push(await renderSection(wrapDocument(coverHtml(info), footer)));
 
-  try {
-    // Rendu SECTION PAR SECTION (couverture, puis chaque annonce) : la mémoire ne
-    // dépasse jamais une annonce à la fois → tient sur un conteneur 512 Mo même à 100+ photos.
-    const buffers: Buffer[] = [];
-    buffers.push(await renderSection(browser, wrapDocument(coverHtml(info), footer)));
-
-    for (let i = 0; i < listings.length; i++) {
-      const l = listings[i];
-      // Photos de CETTE annonce uniquement, redimensionnées juste avant le rendu.
-      const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
-      const photoUris = new Map(entries);
-      const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
-      buffers.push(await renderSection(browser, wrapDocument(section, footer)));
-    }
-
-    // Fusionne tous les PDF de section en un seul document.
-    const merged = await PDFDocument.create();
-    for (const buf of buffers) {
-      const doc = await PDFDocument.load(buf);
-      const pages = await merged.copyPages(doc, doc.getPageIndices());
-      pages.forEach((p) => merged.addPage(p));
-    }
-    return Buffer.from(await merged.save());
-  } finally {
-    await browser.close();
+  for (let i = 0; i < listings.length; i++) {
+    const l = listings[i];
+    // Photos de CETTE annonce uniquement, redimensionnées juste avant son rendu.
+    const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
+    const photoUris = new Map(entries);
+    const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
+    buffers.push(await renderSection(wrapDocument(section, footer)));
   }
+
+  // Fusionne tous les PDF de section en un seul document.
+  const merged = await PDFDocument.create();
+  for (const buf of buffers) {
+    const doc = await PDFDocument.load(buf);
+    const pages = await merged.copyPages(doc, doc.getPageIndices());
+    pages.forEach((p) => merged.addPage(p));
+  }
+  return Buffer.from(await merged.save());
 }
