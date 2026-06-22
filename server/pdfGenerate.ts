@@ -83,9 +83,11 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
   </section>`;
 }
 
+const htmlEscape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 const PAGE_STYLE = `
     @import url('https://fonts.googleapis.com/css2?family=Quattrocento:wght@400;700&family=Quattrocento+Sans:wght@400;700&display=swap');
-    @page { size: A4; margin: 16mm 14mm; }
+    @page { size: A4; }
     * { box-sizing: border-box; font-family: 'Quattrocento Sans', Helvetica, Arial, sans-serif; color: #1b2733; }
     h1, h2 { font-family: 'Quattrocento', Georgia, serif; }
     .cover { height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
@@ -98,17 +100,16 @@ const PAGE_STYLE = `
     .photo { width: 100%; height: auto; border-radius: 8px; break-inside: avoid; page-break-inside: avoid; }
     .specs span, .chip { display: inline-block; background: #DDF3FF; border-radius: 4px; padding: 3px 8px; margin: 2px; font-size: 12px; }
     .desc { font-size: 13px; line-height: 1.5; margin: 12px 0; }
-    table.cost { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    table.cost { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }
     table.cost td { padding: 6px 8px; border-bottom: 1px solid #e3e9ee; }
     table.cost td:last-child { text-align: right; }
     table.cost .total td { font-weight: 700; color: #00286E; border-top: 2px solid #00286E; border-bottom: none; font-size: 16px; }
-    .comment { margin-top: 12px; font-size: 13px; background: #f7f9fb; border-left: 3px solid #FF9A41; padding: 8px 12px; }
-    .footer { position: fixed; bottom: 6mm; left: 0; right: 0; text-align: center; font-size: 11px; color: #6b7a89; }`;
+    .comment { margin-top: 12px; font-size: 13px; background: #f7f9fb; border-left: 3px solid #FF9A41; padding: 8px 12px; break-inside: avoid; page-break-inside: avoid; }`;
 
-/** Enveloppe un fragment de corps dans un document HTML complet (style + pied de page). */
-function wrapDocument(bodyInner: string, footer: string): string {
+/** Enveloppe un fragment de corps dans un document HTML complet (le pied de page est géré par Puppeteer). */
+function wrapDocument(bodyInner: string): string {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/><style>${PAGE_STYLE}</style></head>
-  <body>${bodyInner}<div class="footer">${footer}</div></body></html>`;
+  <body>${bodyInner}</body></html>`;
 }
 
 function coverHtml(info: GeneralInfo): string {
@@ -127,7 +128,7 @@ function coverHtml(info: GeneralInfo): string {
 }
 
 /** Rend un fragment HTML en buffer PDF (une page neuve, fermée après pour libérer sa mémoire). */
-async function renderSection(browser: import('puppeteer').Browser, html: string): Promise<Buffer> {
+async function renderSection(browser: import('puppeteer').Browser, html: string, footerHtml: string): Promise<Buffer> {
   const page = await browser.newPage();
   try {
     // Images en data URI (aucun réseau) ; 'load' + timeout large = robuste sur conteneur limité.
@@ -137,7 +138,16 @@ async function renderSection(browser: import('puppeteer').Browser, html: string)
       page.evaluate(() => (document as any).fonts?.ready),
       new Promise((r) => setTimeout(r, 5000)),
     ]).catch(() => {});
-    return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+    // Pied de page natif Puppeteer : il occupe la marge basse réservée, donc ne se
+    // superpose jamais au contenu (contrairement à un position:fixed).
+    return Buffer.from(await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      displayHeaderFooter: true,
+      headerTemplate: '<span></span>',
+      footerTemplate: `<div style="font-size:8px; color:#6b7a89; width:100%; text-align:center; font-family:Helvetica,Arial,sans-serif;">${footerHtml}</div>`,
+      margin: { top: '16mm', bottom: '16mm', left: '14mm', right: '14mm' },
+    }));
   } finally {
     await page.close();
   }
@@ -166,7 +176,7 @@ async function mergePdfs(files: string[], outFile: string): Promise<Buffer> {
 
 export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Settings): Promise<Buffer> {
   const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
-  const footer = `${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys`;
+  const footer = htmlEscape(`${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys`);
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'evolys-pdf-'));
   const browser = await puppeteer.launch({
@@ -186,7 +196,7 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
       files.push(fp);
     };
 
-    writeSection(0, await renderSection(browser, wrapDocument(coverHtml(info), footer)));
+    writeSection(0, await renderSection(browser, wrapDocument(coverHtml(info)), footer));
 
     for (let i = 0; i < listings.length; i++) {
       const l = listings[i];
@@ -194,7 +204,7 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
       const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
       const photoUris = new Map(entries);
       const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
-      writeSection(i + 1, await renderSection(browser, wrapDocument(section, footer)));
+      writeSection(i + 1, await renderSection(browser, wrapDocument(section), footer));
     }
 
     return await mergePdfs(files, path.join(tmpDir, 'merged.pdf'));
