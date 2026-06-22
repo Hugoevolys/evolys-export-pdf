@@ -13,12 +13,12 @@ const execFileAsync = promisify(execFile);
 sharp.cache(false); // pas de cache libvips : empreinte mémoire constante sur 150+ photos
 
 /**
- * Largeur max des photos dans le PDF. 1000px = parfaitement net à l'écran (usage =
- * téléchargement/visionnage, pas d'impression) tout en bornant la mémoire de rendu
- * pour tenir sur un conteneur 512 Mo même à 150+ photos.
+ * Largeur max des photos dans le PDF. 1500px = très net (proche de l'original) tout en
+ * restant raisonnable. Tient sur un conteneur 512 Mo car la fusion se fait sur disque
+ * (pdfunite) et chaque annonce est rendue puis libérée individuellement.
  */
-const PHOTO_MAX_WIDTH = 1000;
-const PHOTO_QUALITY = 78;
+const PHOTO_MAX_WIDTH = 1500;
+const PHOTO_QUALITY = 82;
 
 /**
  * Redimensionne une photo (max 1600px, auto-orientée via EXIF) en data URI JPEG.
