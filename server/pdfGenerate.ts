@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -76,14 +77,7 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
   </section>`;
 }
 
-export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings, photoUris: Map<string, string>): string {
-  const logo = logoDataUri();
-  const date = new Date().toLocaleDateString('fr-FR');
-  const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
-  const client = `${info.clientFirstName} ${info.clientLastName}`;
-
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/>
-  <style>
+const PAGE_STYLE = `
     @import url('https://fonts.googleapis.com/css2?family=Quattrocento:wght@400;700&family=Quattrocento+Sans:wght@400;700&display=swap');
     @page { size: A4; margin: 16mm 14mm; }
     * { box-sizing: border-box; font-family: 'Quattrocento Sans', Helvetica, Arial, sans-serif; color: #1b2733; }
@@ -92,7 +86,6 @@ export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings, p
     .cover img { max-width: 240px; margin-bottom: 32px; }
     .cover h1 { font-size: 26px; color: #00286E; }
     .cover .advisor { margin-top: 24px; font-size: 14px; color: #44566b; }
-    .listing { page-break-before: always; }
     h2 { color: #00286E; font-size: 20px; margin-bottom: 2px; }
     .loc { color: #44566b; margin-bottom: 10px; }
     .gallery { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
@@ -105,35 +98,33 @@ export function buildHtml(info: GeneralInfo, listings: Listing[], s: Settings, p
     table.cost .total td { font-weight: 700; color: #00286E; border-top: 2px solid #00286E; border-bottom: none; font-size: 16px; }
     table.cost .nego td { font-size: 12px; color: #44566b; font-style: italic; }
     .comment { margin-top: 12px; font-size: 13px; background: #f7f9fb; border-left: 3px solid #FF9A41; padding: 8px 12px; }
-    .footer { position: fixed; bottom: 6mm; left: 0; right: 0; text-align: center; font-size: 11px; color: #6b7a89; }
-  </style></head><body>
-    <div class="cover">
+    .footer { position: fixed; bottom: 6mm; left: 0; right: 0; text-align: center; font-size: 11px; color: #6b7a89; }`;
+
+/** Enveloppe un fragment de corps dans un document HTML complet (style + pied de page). */
+function wrapDocument(bodyInner: string, footer: string): string {
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/><style>${PAGE_STYLE}</style></head>
+  <body>${bodyInner}<div class="footer">${footer}</div></body></html>`;
+}
+
+function coverHtml(info: GeneralInfo): string {
+  const logo = logoDataUri();
+  const date = new Date().toLocaleDateString('fr-FR');
+  const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
+  const client = `${info.clientFirstName} ${info.clientLastName}`;
+  return `<div class="cover">
       ${logo ? `<img src="${logo}"/>` : ''}
       <h1>Sélection de biens pour ${client}</h1>
       <div class="advisor">
         Votre conseiller : ${advisor}<br/>
         ${info.advisorPhone} — ${info.advisorEmail}<br/>${date}
       </div>
-    </div>
-    ${listings.map((l, i) => listingHtml(l, i + 1, s, info.advisorFirstName, photoUris)).join('')}
-    <div class="footer">${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys</div>
-  </body></html>`;
+    </div>`;
 }
 
-export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Settings): Promise<Buffer> {
-  // Pré-calcule les data URIs des photos (redimensionnées) une seule fois chacune.
-  const uniquePaths = [...new Set(listings.flatMap((l) => l.photos))];
-  const entries = await Promise.all(uniquePaths.map(async (p) => [p, await photoDataUri(p)] as const));
-  const photoUris = new Map(entries);
-
-  const html = buildHtml(info, listings, s, photoUris);
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-  });
+/** Rend un fragment HTML en buffer PDF (une page neuve, fermée après pour libérer la mémoire). */
+async function renderSection(browser: import('puppeteer').Browser, html: string): Promise<Buffer> {
+  const page = await browser.newPage();
   try {
-    const page = await browser.newPage();
     // Images en data URI (aucun réseau) ; 'load' + timeout large = robuste sur conteneur limité.
     await page.setContent(html, { waitUntil: 'load', timeout: 120000 });
     // Attend le chargement des polices Google Fonts, borné pour ne jamais bloquer.
@@ -142,6 +133,44 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
       new Promise((r) => setTimeout(r, 5000)),
     ]).catch(() => {});
     return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+  } finally {
+    await page.close(); // libère la mémoire (images décodées) avant la section suivante
+  }
+}
+
+export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Settings): Promise<Buffer> {
+  const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
+  const footer = `${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys`;
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+  });
+
+  try {
+    // Rendu SECTION PAR SECTION (couverture, puis chaque annonce) : la mémoire ne
+    // dépasse jamais une annonce à la fois → tient sur un conteneur 512 Mo même à 100+ photos.
+    const buffers: Buffer[] = [];
+    buffers.push(await renderSection(browser, wrapDocument(coverHtml(info), footer)));
+
+    for (let i = 0; i < listings.length; i++) {
+      const l = listings[i];
+      // Photos de CETTE annonce uniquement, redimensionnées juste avant le rendu.
+      const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
+      const photoUris = new Map(entries);
+      const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
+      buffers.push(await renderSection(browser, wrapDocument(section, footer)));
+    }
+
+    // Fusionne tous les PDF de section en un seul document.
+    const merged = await PDFDocument.create();
+    for (const buf of buffers) {
+      const doc = await PDFDocument.load(buf);
+      const pages = await merged.copyPages(doc, doc.getPageIndices());
+      pages.forEach((p) => merged.addPage(p));
+    }
+    return Buffer.from(await merged.save());
   } finally {
     await browser.close();
   }
