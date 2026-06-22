@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: evolys-export-pdf-api
+    runtime: docker
+    plan: starter            # le free tier s'endort ; starter recommandé pour Chromium
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # à renseigner dans le dashboard Render
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-6
+      - key: CORS_ORIGIN
+        sync: false          # ex. https://evolys-export.netlify.app
+      - key: PORT
+        value: 3001

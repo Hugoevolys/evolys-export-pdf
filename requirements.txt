@@ -1,0 +1,2 @@
+# Extraction du PDF moteur immo (texte + images)
+pymupdf>=1.24
