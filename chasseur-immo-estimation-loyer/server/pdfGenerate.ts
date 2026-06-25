@@ -11,8 +11,11 @@ const BLUE = '#6DCAFF';
 const ACCENT = '#FF9A41';
 
 // ---------- Mentions legales Evolys (fixes) ----------
+const EVOLYS_LEGAL_NAME = 'SAS ARM IMMO';
 const EVOLYS_LEGAL_ADDRESS = "809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont";
 const EVOLYS_SIREN = '927 684 944';
+const EVOLYS_CARD = 'CPI76022025000000001';
+const EVOLYS_REP = 'M. MAHIEUX Axel';
 
 // ---------- Formatage ----------
 const euro = (n: number) =>
@@ -243,12 +246,13 @@ const CSS = `
 function footerTemplate(d: EstimationData): string {
   const left = `${esc(d.advisor.company)} - Estimation locative - ${esc(d.footerAddress)}`;
   const name = [d.advisor.advisorName, d.advisor.advisorLastName].filter(Boolean).join(' ').trim();
+  const company = `Evolys - ${EVOLYS_LEGAL_NAME}, ${EVOLYS_LEGAL_ADDRESS} - SIREN ${EVOLYS_SIREN} - Carte professionnelle ${EVOLYS_CARD} - représentée par ${EVOLYS_REP}`;
   const conseiller = name
-    ? `${esc(name)}, ${esc(d.advisor.role || 'chasseur immobilier')}${d.advisor.rsac ? ` - RSAC ${esc(d.advisor.rsac)}` : ''}`
+    ? `Estimation établie par ${esc(name)}, ${esc(d.advisor.role || 'chasseur immobilier')}${d.advisor.rsac ? ` - RSAC ${esc(d.advisor.rsac)}` : ''}`
     : '';
-  const legal = `Evolys - ${EVOLYS_LEGAL_ADDRESS} - SIREN ${EVOLYS_SIREN}${conseiller ? ` - ${conseiller}` : ''}`;
   return `<div style="width:100%; color:#fff; background:${NAVY}; box-sizing:border-box; font-family: Helvetica, Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.3;">${legal}</div>
+    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.35;">${company}</div>
+    ${conseiller ? `<div style="font-size:6px; opacity:.8; text-align:center; padding:1px 16px 0; line-height:1.35;">${conseiller}</div>` : ''}
     <div style="font-size:7.5px; padding:2px 16px 5px; display:flex; justify-content:space-between;">
       <span>${left}</span>
       <span>Page <span class="pageNumber"></span> - établi le ${esc(d.advisor.date)}</span>
@@ -271,7 +275,7 @@ export async function generatePdf(d: EstimationData): Promise<Buffer> {
       displayHeaderFooter: true,
       headerTemplate: headerHtml(d),
       footerTemplate: footerTemplate(d),
-      margin: { top: '78px', bottom: '48px', left: '0', right: '0' },
+      margin: { top: '78px', bottom: '58px', left: '0', right: '0' },
     });
     return Buffer.from(pdf);
   } finally {

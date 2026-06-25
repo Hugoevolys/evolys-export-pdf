@@ -37,7 +37,10 @@ export function PropertyForm({ onSubmit, loading }: {
     return { ...s, [k]: next.join(', ') };
   });
 
-  const valid = p.address && p.postalCode && p.city && p.surface > 0;
+  const valid = !!(
+    p.address && p.postalCode && p.city && p.surface > 0 &&
+    advisor.advisorName?.trim() && advisor.advisorLastName?.trim() && advisor.rsac?.trim()
+  );
 
   return (
     <div className="card space-y-6">
