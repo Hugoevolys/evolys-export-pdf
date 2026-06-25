@@ -34,7 +34,9 @@ export interface PropertyInput {
 
 export interface Advisor {
   company: string;            // marque (porte le logo) - defaut "Evolys"
-  advisorName: string;        // prenom/nom du conseiller qui etablit l'estimation
+  advisorName: string;        // prenom du conseiller qui etablit l'estimation
+  advisorLastName?: string;   // nom du conseiller (mentions legales pied de page)
+  rsac?: string;              // numero RSAC du conseiller (mentions legales)
   role: string;               // "Chasseur immobilier"
   date: string;               // "03/06/2026"
   client?: string;            // destinataire : "a l'attention de ..."

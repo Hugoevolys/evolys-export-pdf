@@ -63,6 +63,8 @@ export async function research(input: PropertyInput, advisor?: Partial<Advisor>)
   data.advisor = {
     company: advisor?.company || 'Evolys',
     advisorName: advisor?.advisorName || '',
+    advisorLastName: advisor?.advisorLastName,
+    rsac: advisor?.rsac,
     role: advisor?.role || 'Chasseur immobilier',
     date: advisor?.date || todayFr(),
     client: advisor?.client,

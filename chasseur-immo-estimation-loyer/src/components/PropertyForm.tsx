@@ -27,7 +27,7 @@ export function PropertyForm({ onSubmit, loading }: {
 }) {
   const [p, setP] = useState<PropertyInput>(empty);
   // Le rôle est toujours « Chasseur immobilier » : fixe, non saisi par le conseiller.
-  const [advisor, setAdvisor] = useState<Partial<Advisor>>({ company: 'Evolys', advisorName: '', role: 'Chasseur immobilier', client: '' });
+  const [advisor, setAdvisor] = useState<Partial<Advisor>>({ company: 'Evolys', advisorName: '', advisorLastName: '', rsac: '', role: 'Chasseur immobilier', client: '' });
   const set = (k: keyof PropertyInput, v: any) => setP((s) => ({ ...s, [k]: v }));
   const setA = (k: keyof Advisor, v: any) => setAdvisor((s) => ({ ...s, [k]: v }));
   // Coche/décoche une option multi-select a partir de l'etat le plus recent (robuste).
@@ -105,14 +105,18 @@ export function PropertyForm({ onSubmit, loading }: {
         </div>
       </Section>
 
-      <Section title="Conseiller & client" icon={UserRound} hint="en-tête du PDF">
+      <Section title="Conseiller & client" icon={UserRound} hint="en-tête & mentions légales du PDF">
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="label">Conseiller (prénom) *</label>
+          <div><label className="label">Conseiller — prénom *</label>
             <input className="input" value={advisor.advisorName || ''} onChange={(e) => setA('advisorName', cap(e.target.value))} placeholder="Hugo" /></div>
+          <div><label className="label">Conseiller — nom *</label>
+            <input className="input" value={advisor.advisorLastName || ''} onChange={(e) => setA('advisorLastName', cap(e.target.value))} placeholder="Martin" /></div>
+          <div><label className="label">Numéro RSAC *</label>
+            <input className="input" value={advisor.rsac || ''} onChange={(e) => setA('rsac', e.target.value)} placeholder="ex : 902 345 678" /></div>
           <div><label className="label">À l'attention de (client)</label>
             <input className="input" value={advisor.client || ''} onChange={(e) => setA('client', cap(e.target.value))} placeholder="M. et Mme Martin" /></div>
         </div>
-        <p className="text-xs text-slate-400 mt-2">Le document est daté automatiquement au jour de la génération.</p>
+        <p className="text-xs text-slate-400 mt-2">Nom, prénom et n° RSAC apparaissent dans les mentions légales en pied de page. Le document est daté automatiquement au jour de la génération.</p>
       </Section>
 
       <button className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base" disabled={!valid || loading}

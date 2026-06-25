@@ -10,6 +10,10 @@ const LIGHT = '#DDF3FF';
 const BLUE = '#6DCAFF';
 const ACCENT = '#FF9A41';
 
+// ---------- Mentions legales Evolys (fixes) ----------
+const EVOLYS_LEGAL_ADDRESS = "809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont";
+const EVOLYS_SIREN = '927 684 944';
+
 // ---------- Formatage ----------
 const euro = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
@@ -238,9 +242,17 @@ const CSS = `
 
 function footerTemplate(d: EstimationData): string {
   const left = `${esc(d.advisor.company)} - Estimation locative - ${esc(d.footerAddress)}`;
-  return `<div style="width:100%; font-size:7.5px; color:#fff; background:${NAVY}; padding:5px 16px; box-sizing:border-box; display:flex; justify-content:space-between; font-family: Helvetica, Arial, sans-serif;">
-    <span>${left}</span>
-    <span>Page <span class="pageNumber"></span> - établi le ${esc(d.advisor.date)}</span>
+  const name = [d.advisor.advisorName, d.advisor.advisorLastName].filter(Boolean).join(' ').trim();
+  const conseiller = name
+    ? `${esc(name)}, ${esc(d.advisor.role || 'chasseur immobilier')}${d.advisor.rsac ? ` - RSAC ${esc(d.advisor.rsac)}` : ''}`
+    : '';
+  const legal = `Evolys - ${EVOLYS_LEGAL_ADDRESS} - SIREN ${EVOLYS_SIREN}${conseiller ? ` - ${conseiller}` : ''}`;
+  return `<div style="width:100%; color:#fff; background:${NAVY}; box-sizing:border-box; font-family: Helvetica, Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.3;">${legal}</div>
+    <div style="font-size:7.5px; padding:2px 16px 5px; display:flex; justify-content:space-between;">
+      <span>${left}</span>
+      <span>Page <span class="pageNumber"></span> - établi le ${esc(d.advisor.date)}</span>
+    </div>
   </div>`;
 }
 
@@ -259,7 +271,7 @@ export async function generatePdf(d: EstimationData): Promise<Buffer> {
       displayHeaderFooter: true,
       headerTemplate: headerHtml(d),
       footerTemplate: footerTemplate(d),
-      margin: { top: '78px', bottom: '34px', left: '0', right: '0' },
+      margin: { top: '78px', bottom: '48px', left: '0', right: '0' },
     });
     return Buffer.from(pdf);
   } finally {
