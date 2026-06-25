@@ -54,5 +54,6 @@ app.post('/api/sector', async (req, res) => {
   }
 });
 
-const PORT = Number(process.env.PORT) || 3001;
+// Defaut 3002 en local (3001 souvent pris par un autre projet) ; en prod le PORT est impose par l'hote.
+const PORT = Number(process.env.PORT) || 3002;
 app.listen(PORT, () => console.log(`Backend estimation loyer sur http://localhost:${PORT}`));
