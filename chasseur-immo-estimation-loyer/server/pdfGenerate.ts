@@ -125,14 +125,6 @@ function marketHtml(d: EstimationData, n: number): string {
       <div class="card-val">${euro(val)}</div>
       <div class="card-cap">~${m2cap(perM2)} €/m² - HC / mois</div>
     </div>`;
-  const priceRef = d.priceRef?.length
-    ? `<table class="grid pref">
-        <thead><tr><th>Référence de prix (appartement)</th><th>Loyer €/m²</th><th>Loyer estimé</th></tr></thead>
-        <tbody>${d.priceRef
-          .map((p) => `<tr><td class="left">${esc(p.label)}</td><td>${esc(p.eurM2)}</td><td>${esc(p.eurTotal)}</td></tr>`)
-          .join('')}</tbody>
-      </table>`
-    : '';
   return `
   ${sectionTitle(n, 'Estimation du loyer de marché' + (d.furnished ? ' (meublé, longue durée)' : ' (longue durée)'))}
   <div class="cards">
@@ -140,8 +132,7 @@ function marketHtml(d: EstimationData, n: number): string {
     ${card('mid', 'LOYER MOYEN ESTIMÉ', m.moyen, m.moyenM2)}
     ${card('high', 'ESTIMATION HAUTE', m.haute, m.hauteM2)}
   </div>
-  ${m.paragraph ? `<p class="para">${rich(m.paragraph)}</p>` : ''}
-  ${priceRef}`;
+  ${m.paragraph ? `<p class="para">${rich(m.paragraph)}</p>` : ''}`;
 }
 
 function methodologyHtml(d: EstimationData, n: number): string {

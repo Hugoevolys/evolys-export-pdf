@@ -14,7 +14,7 @@ METHODE (obligatoire, dans cet ordre) :
 1. ZONE TENDUE : verifie le statut de la commune via le simulateur OFFICIEL service-public.fr (decret en vigueur). Donne le decret cite si disponible. Impact : preavis locataire (1 mois si tendue, 3 mois sinon), taxe logements vacants.
 2. ENCADREMENT DES LOYERS : determine si la commune applique l'encadrement (loi ELAN). Communes concernees a verifier : Paris, Lyon-Villeurbanne, Lille (+Hellemmes/Lomme), Montpellier, Bordeaux, Pays Basque, Plaine Commune, Est Ensemble, Marseille, Grenoble, etc. NE PAS deviner : verifie via le simulateur officiel de la metropole/ville (adresse geolocalisee).
 3. SI ENCADRE : recupere le LOYER DE REFERENCE et le LOYER DE REFERENCE MAJORE (= plafond legal) pour la bonne ZONE geographique, la bonne TYPOLOGIE, le caractere MEUBLE/NON MEUBLE, et CHAQUE epoque de construction. Le plafond legal a une valeur juridique : ne JAMAIS inventer un chiffre. Si tu ne peux pas verifier la grille exacte, indique-le explicitement dans 'detail' et reste prudent.
-4. LOYER DE MARCHE : croise AU MOINS 3 sources (SeLoger, MeilleursAgents, L'Apporteur d'Immo, Observatoire Local des Loyers / Carte des loyers de l'Etat, LocService...). Donne une fourchette basse / moyenne / haute en EUR/mois HORS CHARGES, coherente avec le secteur exact (arrondissement / quartier).
+4. LOYER DE MARCHE : croise AU MOINS 3-4 sources (SeLoger, MeilleursAgents, L'Apporteur d'Immo, Observatoire Local des Loyers / Carte des loyers de l'Etat, LocService...). Donne une fourchette basse / moyenne / haute en EUR/mois HORS CHARGES, coherente avec le secteur exact (arrondissement / quartier). IMPORTANT : raisonne sur des references COMPARABLES (meme typologie, meme caractere meuble/nu, surface proche). N'utilise PAS une mediane "toutes typologies" brute comme estimation : pour un petit logement meuble, le EUR/m2 pertinent est nettement superieur a la mediane ville. La fourchette finale et toutes les references citees doivent etre COHERENTES entre elles (pas de source qui suggere un loyer 2x plus bas que la fourchette retenue).
 
 REGLES DE COHERENCE :
 - basseM2 < moyenM2 < hauteM2, et chaque montant EUR = round(M2 * surface). Les valeurs doivent etre PLAUSIBLES pour la ville/le quartier (pas de fourchette absurde).
@@ -23,7 +23,9 @@ REGLES DE COHERENCE :
 - Si encadre : le loyer cible recommande ne doit PAS depasser le plafond legal de l'epoque de construction.
 - Etat (neuf/bon/a rafraichir/travaux), etage/ascenseur, exterieur, exposition : positionnent dans la fourchette (bas/haut).
 
-CONCISION (IMPORTANT) : les champs 'detail' du tableau reglementaire (section 1) doivent etre COURTS, factuels et centres UNIQUEMENT sur la commune et le bien etudies. 1 a 2 phrases par ligne, ~220 caracteres maximum. NE PAS lister les autres villes encadrees (Paris, Lyon, Lille, Bordeaux, Montpellier...), NE PAS empiler plusieurs numeros de decrets, NE PAS ajouter de details hors-sujet : on va droit a l'essentiel pour CE bien et CETTE ville. La 'regulatoryNote' reste breve (1 phrase). Seul le 'paragraph' de marche peut rester plus developpe.
+CONCISION (IMPORTANT) : les champs 'detail' du tableau reglementaire (section 1) doivent etre COURTS, factuels et centres UNIQUEMENT sur la commune et le bien etudies. 1 a 2 phrases par ligne, ~220 caracteres maximum. NE PAS lister les autres villes encadrees (Paris, Lyon, Lille, Bordeaux, Montpellier...), NE PAS empiler plusieurs numeros de decrets, NE PAS ajouter de details hors-sujet : on va droit a l'essentiel pour CE bien et CETTE ville. La 'regulatoryNote' reste breve (1 phrase).
+
+RESUME MARCHE (section 2) — le champ 'paragraph' est un RESUME COURT (3 a 4 phrases, ~450 caracteres max) qui : (a) annonce la fourchette retenue et le loyer cible recommande ; (b) explique en 1-2 phrases le positionnement de CE bien (atouts/limites concrets) ; (c) precise que l'estimation est croisee sur plusieurs sources. INTERDIT dans ce paragraphe : derouler les sources une par une, citer des loyers au m2 intermediaires ou des sous-totaux, et afficher TOUT chiffre qui contredit la fourchette retenue (ex : mediane "toutes typologies" donnant un loyer bien plus bas). Ne produis PAS de tableau 'priceRef' (laisse le champ absent). Le tableau 'sources' liste 3 a 5 sources (nom + nature courte) ; la colonne volume/fiabilite reste QUALITATIVE et coherente avec la fourchette (pas de medianes/quartiles bruts qui suggereraient un autre prix). La 'fiabilite' tient en 1 phrase (ex : "Estimation croisee sur 4 sources concordantes, fiabilite bonne").
 
 SORTIE : reponds UNIQUEMENT par un objet JSON valide conforme au schema fourni, sans aucun texte autour, sans bloc markdown. Toutes les chaines en francais avec une ORTHOGRAPHE CORRECTE ET LES ACCENTS (é, è, ê, à, â, ç, î, ô, û...) : ecris "marché", "qualité", "électrique", "refait à neuf", "état", "élément", "négatif", "observées", etc. — JAMAIS de texte sans accents. Ne rien inventer ; si une donnee manque, sois transparent dans le texte.`;
 
@@ -53,15 +55,13 @@ export const SCHEMA_HINT = `{
   "market": {
     "basse": 660, "moyen": 740, "haute": 810,
     "basseM2": 13.5, "moyenM2": 15.1, "hauteM2": 16.5,
-    "paragraph": string,
+    "paragraph": string,                             // RESUME COURT (3-4 phrases) : fourchette + cible + positionnement du bien + "croise sur N sources". PAS de detail source par source ni de chiffres contradictoires.
     "cibleRecommandee": string
   },
-  "priceRef": [                                      // optionnel (utile en variant "libre")
-    { "label": "Moyenne ville - tous biens", "eurM2": "14 - 15 EUR/m2", "eurTotal": "~ 600 - 645 EUR" }
-  ],
+  // "priceRef" : NE PAS PRODUIRE (supprime de la mise en page).
 
   "sources": [
-    { "source": "Simulateur officiel ...", "nature": "...", "volume": "..." }
+    { "source": "Nom de la source", "nature": "ce qu'elle apporte (court)", "volume": "fiabilite QUALITATIVE, coherente avec la fourchette" }
     // 3 a 5 lignes
   ],
   "referencesLine": string,                         // optionnel : references de simulation officielles
