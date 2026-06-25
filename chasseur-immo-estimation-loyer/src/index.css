@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Quattrocento:wght@400;700&family=Quattrocento+Sans:wght@400;700&display=swap');
+
+body { background: #f1f5f9; font-family: 'Quattrocento Sans', Helvetica, Arial, sans-serif; }
+.input { @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/30 focus:border-navy; }
+.label { @apply block text-xs font-medium text-slate-600 mb-1; }
+.btn { @apply px-4 py-2.5 rounded-lg font-medium text-sm transition-colors; }
+.btn-primary { @apply btn bg-navy text-white hover:bg-navy-dark disabled:opacity-40; }
+.btn-ghost { @apply btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50; }
+.card { @apply bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 p-6; }
