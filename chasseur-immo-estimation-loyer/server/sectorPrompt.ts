@@ -15,6 +15,7 @@ METHODE (obligatoire) - croise CES TROIS familles de sources via la recherche we
 3. DVF (Demandes de Valeurs Foncieres - ventes reellement enregistrees, data.gouv / app.dvf.etalab.gouv.fr ou sites qui l'exploitent) : donne la moyenne au m2 des ventes des 2 DERNIERES ANNEES pour ce type de bien sur la commune.
 
 SYNTHESE :
+- Si une ADRESSE precise est fournie, AFFINE sur le quartier exact (geolocalise l'adresse) : les prix varient fortement d'un quartier a l'autre d'une meme ville. Sinon, raisonne a l'echelle de la commune.
 - Donne un PRIX MOYEN au m2 (EUR) + une fourchette basse / haute coherente, en CROISANT les 3 familles de sources (ne te fie pas a une seule).
 - maison = monopropriete (pavillon/maison individuelle) ; distingue bien appartement vs maison, les prix au m2 different.
 - Calcule le prix estime pour la surface fournie : prixEstimeBien = round(prixMoyenM2 * surface) ; idem pour basse/haute.
@@ -50,7 +51,7 @@ export const SECTOR_SCHEMA_HINT = `{
 export function buildSectorPrompt(p: SectorInput): string {
   const type = p.propertyType === 'maison' ? 'maison (monopropriete / individuelle)' : 'appartement';
   return `Estime le PRIX MOYEN D'ACHAT AU M2 du secteur pour :
-- Ville : ${p.city}${p.postalCode ? ` (${p.postalCode})` : ''}
+${p.address ? `- Adresse : ${p.address}, ${p.city}${p.postalCode ? ` (${p.postalCode})` : ''} -> AFFINE sur le quartier exact de cette adresse\n` : ''}- Ville : ${p.city}${p.postalCode ? ` (${p.postalCode})` : ''}
 - Type de bien : ${type}
 - Surface de reference : ${p.surface} m2
 

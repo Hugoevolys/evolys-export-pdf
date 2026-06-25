@@ -9,7 +9,7 @@ const eurM2 = (n: number) => `${new Intl.NumberFormat('fr-FR', { maximumFraction
 const cap = (v: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
 
 export function SectorTool({ onBack }: { onBack: () => void }) {
-  const [input, setInput] = useState<SectorInput>({ city: '', postalCode: '', propertyType: 'appartement', surface: 0 });
+  const [input, setInput] = useState<SectorInput>({ address: '', city: '', postalCode: '', propertyType: 'appartement', surface: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<SectorEstimate | null>(null);
@@ -44,6 +44,8 @@ export function SectorTool({ onBack }: { onBack: () => void }) {
           <span className="text-sm font-semibold text-navy">Secteur & bien</span>
         </div>
         <div className="grid grid-cols-6 gap-3">
+          <div className="col-span-6"><label className="label">Adresse <span className="text-slate-400 font-normal">(optionnel — affine le quartier)</span></label>
+            <input className="input" value={input.address || ''} onChange={(e) => set('address', cap(e.target.value))} placeholder="12 rue Saint-Romain" /></div>
           <div className="col-span-3"><label className="label">Ville *</label>
             <input className="input" value={input.city} onChange={(e) => set('city', cap(e.target.value))} placeholder="Rouen" /></div>
           <div className="col-span-1"><label className="label">Code postal</label>
@@ -80,7 +82,7 @@ function SectorResult({ data, onReset, onBack }: { data: SectorEstimate; onReset
       </button>
       <div>
         <h2 className="font-title text-2xl text-navy">Prix moyen du secteur</h2>
-        <p className="text-sm text-slate-500 mt-1">{typeLabel} — {data.city}{data.postalCode ? ` (${data.postalCode})` : ''} · référence {data.surface} m²</p>
+        <p className="text-sm text-slate-500 mt-1">{typeLabel} — {data.address ? `${data.address}, ` : ''}{data.city}{data.postalCode ? ` (${data.postalCode})` : ''} · référence {data.surface} m²</p>
       </div>
 
       {/* Bandeau resultat */}

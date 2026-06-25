@@ -49,6 +49,7 @@ export async function sectorResearch(input: SectorInput): Promise<SectorEstimate
   const data = parseJson(collectText(msg.content)) as SectorEstimate;
 
   // Garantit la coherence des champs renvoyes a l'UI.
+  data.address = data.address || input.address;
   data.city = data.city || input.city;
   data.postalCode = data.postalCode || input.postalCode;
   data.propertyType = data.propertyType || input.propertyType;

@@ -125,6 +125,7 @@ export interface EstimationData {
 
 /** Saisie minimale pour estimer le prix moyen d'un secteur. */
 export interface SectorInput {
+  address?: string;                   // "12 rue Saint-Romain" (optionnel, affine le quartier)
   city: string;                       // "Rouen"
   postalCode?: string;                // "76000" (optionnel, ameliore la precision)
   propertyType: 'appartement' | 'maison'; // maison = monopropriete
@@ -140,6 +141,7 @@ export interface SectorSourceRow {
 
 /** Resultat affiche a l'ecran (aucun PDF). */
 export interface SectorEstimate {
+  address?: string;
   city: string;
   postalCode?: string;
   propertyType: string;               // "appartement" | "maison"
