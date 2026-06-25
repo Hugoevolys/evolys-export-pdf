@@ -104,7 +104,8 @@ const PAGE_STYLE = `
     table.cost td { padding: 6px 8px; border-bottom: 1px solid #e3e9ee; }
     table.cost td:last-child { text-align: right; }
     table.cost .total td { font-weight: 700; color: #00286E; border-top: 2px solid #00286E; border-bottom: none; font-size: 16px; }
-    .comment { margin-top: 12px; font-size: 13px; background: #f7f9fb; border-left: 3px solid #FF9A41; padding: 8px 12px; break-inside: avoid; page-break-inside: avoid; }`;
+    .comment { margin-top: 12px; font-size: 13px; background: #f7f9fb; border-left: 3px solid #FF9A41; padding: 8px 12px; break-inside: avoid; page-break-inside: avoid; }
+    .legal { margin-top: 28px; padding-top: 8px; border-top: 1px solid #e3e9ee; font-size: 8px; line-height: 1.45; color: #8a97a3; break-inside: avoid; page-break-inside: avoid; }`;
 
 /** Enveloppe un fragment de corps dans un document HTML complet (le pied de page est géré par Puppeteer). */
 function wrapDocument(bodyInner: string): string {
@@ -125,6 +126,19 @@ function coverHtml(info: GeneralInfo): string {
         ${info.advisorPhone} — ${info.advisorEmail}<br/>${date}
       </div>
     </div>`;
+}
+
+// Mentions légales Evolys — constantes (toujours identiques).
+const EVOLYS_LEGAL =
+  "SAS ARM IMMO — 809 RUE DE CROIXMARE, 76510 SAINT-NICOLAS-D'ALIERMONT — SIREN 927684944. " +
+  'Représentée par Monsieur MAHIEUX Axel, titulaire de la carte professionnelle immobilière numéro CPI76022025000000001.';
+
+/** Bloc mentions légales (Evolys + conseiller) ajouté en bas de la dernière page. */
+function legalHtml(info: GeneralInfo): string {
+  const advisor = htmlEscape(`${info.advisorLastName} ${info.advisorFirstName}`.trim());
+  const rsac = htmlEscape((info.advisorRsac || '').trim());
+  const conseiller = advisor ? `Conseiller : ${advisor}${rsac ? ` — RSAC ${rsac}` : ''}.` : '';
+  return `<div class="legal"><strong>Mentions légales.</strong> ${EVOLYS_LEGAL} ${conseiller}</div>`;
 }
 
 /** Rend un fragment HTML en buffer PDF (une page neuve, fermée après pour libérer sa mémoire). */
@@ -203,7 +217,9 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
       // Photos de CETTE annonce uniquement, redimensionnées juste avant son rendu.
       const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
       const photoUris = new Map(entries);
-      const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris);
+      // Mentions légales en bas de la dernière annonce (= dernière page).
+      const isLast = i === listings.length - 1;
+      const section = listingHtml(l, i + 1, s, info.advisorFirstName, photoUris) + (isLast ? legalHtml(info) : '');
       writeSection(i + 1, await renderSection(browser, wrapDocument(section), footer));
     }
 

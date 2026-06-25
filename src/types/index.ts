@@ -7,6 +7,7 @@ export interface GeneralInfo {
   advisorLastName: string;
   advisorPhone: string;
   advisorEmail: string;
+  advisorRsac: string; // n° RSAC du conseiller (mentions légales)
 }
 
 export type MandateType = 'simple' | 'exclusif';

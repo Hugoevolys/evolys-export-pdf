@@ -10,7 +10,7 @@ type Step = 'upload' | 'general' | 'listings' | 'done';
 const emptyInfo: GeneralInfo = {
   clientFirstName: '', clientLastName: '',
   advisorFirstName: '', advisorLastName: '',
-  advisorPhone: '', advisorEmail: '',
+  advisorPhone: '', advisorEmail: '', advisorRsac: '',
 };
 
 export default function App() {

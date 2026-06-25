@@ -7,6 +7,7 @@ const fields: { key: keyof GeneralInfo; label: string; type?: string }[] = [
   { key: 'advisorLastName', label: 'Nom du conseiller' },
   { key: 'advisorPhone', label: 'Téléphone du conseiller', type: 'tel' },
   { key: 'advisorEmail', label: 'Email du conseiller', type: 'email' },
+  { key: 'advisorRsac', label: 'N° RSAC du conseiller' },
 ];
 
 export function GeneralInfoForm({
