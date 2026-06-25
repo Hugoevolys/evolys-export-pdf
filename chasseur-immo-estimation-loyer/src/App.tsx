@@ -58,8 +58,8 @@ export default function App() {
             <div className="grid sm:grid-cols-2 gap-4">
               <ToolCard
                 icon={FileText}
-                title="Estimation de loyer"
-                desc="Location longue durée : statut réglementaire, encadrement, loyer de marché → PDF téléchargeable."
+                title="Estimation de loyer longue durée"
+                desc="Statut réglementaire, encadrement, loyer de marché → PDF téléchargeable."
                 onClick={() => { setView('rentForm'); setError(''); }}
               />
               <ToolCard
