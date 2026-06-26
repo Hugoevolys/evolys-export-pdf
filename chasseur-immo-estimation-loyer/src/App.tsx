@@ -2,10 +2,11 @@ import { useState } from 'react';
 import type { PropertyInput, Advisor } from '@/types';
 import { estimate, generatePdf } from '@/lib/api';
 import { PropertyForm } from '@/components/PropertyForm';
-import { SectorTool } from '@/components/SectorTool';
-import { CheckCircle2, FileText, TrendingUp, ChevronRight } from 'lucide-react';
+import { CheckCircle2, FileText, TrendingUp, ChevronRight, ExternalLink } from 'lucide-react';
 
-type View = 'home' | 'rentForm' | 'rentDone' | 'sector';
+type View = 'home' | 'rentForm' | 'rentDone';
+
+const PRIX_SECTEUR_URL = 'https://www.meilleursagents.com/prix-immobilier/';
 
 export default function App() {
   const [view, setView] = useState<View>('home');
@@ -29,10 +30,7 @@ export default function App() {
     finally { setLoading(false); }
   }
 
-  const headerTag =
-    view === 'sector' ? 'Prix moyen du secteur'
-    : view.startsWith('rent') ? 'Estimation de loyer'
-    : 'Outils conseiller';
+  const headerTag = view.startsWith('rent') ? 'Estimation de loyer' : 'Outils conseiller';
 
   return (
     <div className="min-h-screen">
@@ -65,8 +63,9 @@ export default function App() {
               <ToolCard
                 icon={TrendingUp}
                 title="Prix moyen du secteur"
-                desc="Prix d'achat moyen au m² d'une ville (annonces, prix au m², DVF). Réponse à l'écran, sans PDF."
-                onClick={() => { setView('sector'); setError(''); }}
+                desc="Consulter les prix au m² du secteur sur MeilleursAgents (ouvre le site)."
+                external
+                onClick={() => window.open(PRIX_SECTEUR_URL, '_blank', 'noopener,noreferrer')}
               />
             </div>
           </div>
@@ -85,18 +84,17 @@ export default function App() {
             </div>
           </div>
         )}
-
-        {view === 'sector' && <SectorTool onBack={() => { setView('home'); setError(''); }} />}
       </main>
     </div>
   );
 }
 
-function ToolCard({ icon: Icon, title, desc, onClick }: {
+function ToolCard({ icon: Icon, title, desc, onClick, external }: {
   icon: typeof FileText;
   title: string;
   desc: string;
   onClick: () => void;
+  external?: boolean;
 }) {
   return (
     <button onClick={onClick}
@@ -105,7 +103,9 @@ function ToolCard({ icon: Icon, title, desc, onClick }: {
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy/10 text-navy">
           <Icon className="h-5 w-5" />
         </span>
-        <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-navy transition-colors" />
+        {external
+          ? <ExternalLink className="h-5 w-5 text-slate-300 group-hover:text-navy transition-colors" />
+          : <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-navy transition-colors" />}
       </div>
       <h2 className="font-title text-lg text-navy mt-3">{title}</h2>
       <p className="text-sm text-slate-500 mt-1">{desc}</p>

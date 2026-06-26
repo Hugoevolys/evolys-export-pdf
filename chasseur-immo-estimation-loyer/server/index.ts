@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { research } from './research.ts';
-import { sectorResearch } from './sectorResearch.ts';
 import { generatePdf } from './pdfGenerate.ts';
 
 const app = express();
@@ -35,19 +34,6 @@ app.post('/api/generate', async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="estimation_loyer_${slug}.pdf"`);
     res.send(pdf);
-  } catch (e: any) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// 3) Prix moyen du secteur : { city, propertyType, surface } -> SectorEstimate (affichage, pas de PDF).
-app.post('/api/sector', async (req, res) => {
-  try {
-    const input = req.body;
-    if (!input?.city || !input?.surface) return res.status(400).json({ error: 'Indiquez au moins la ville et la surface.' });
-    const data = await sectorResearch(input);
-    res.json(data);
   } catch (e: any) {
     console.error(e);
     res.status(500).json({ error: e.message });

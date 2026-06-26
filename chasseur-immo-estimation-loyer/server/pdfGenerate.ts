@@ -143,16 +143,10 @@ function marketHtml(d: EstimationData, n: number): string {
 }
 
 function methodologyHtml(d: EstimationData, n: number): string {
-  const rows = d.sources
-    .map((s) => `<tr><td class="left">${esc(s.source)}</td><td class="left">${rich(s.nature)}</td><td class="left">${rich(s.volume)}</td></tr>`)
-    .join('');
+  const srcNames = (d.sources || []).map((s) => esc(s.source)).filter(Boolean).join(' · ');
   return `
   ${sectionTitle(n, 'Méthodologie, sources et fiabilité des données')}
-  <table class="grid src">
-    <thead><tr><th>Source</th><th>Nature de la donnée</th><th>Volume / fiabilité</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  ${d.referencesLine ? `<div class="caption">${rich(d.referencesLine)}</div>` : ''}
+  ${srcNames ? `<p class="para"><strong>Sources croisées :</strong> ${srcNames}.</p>` : ''}
   ${d.fiabilite ? `<div class="caption">${rich(d.fiabilite)}</div>` : ''}
   <div class="warn"><strong>Avertissement.</strong> ${rich(d.disclaimer)}</div>`;
 }

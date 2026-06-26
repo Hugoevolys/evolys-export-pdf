@@ -1,4 +1,4 @@
-import type { PropertyInput, EstimationData, Advisor, SectorInput, SectorEstimate } from '@/types';
+import type { PropertyInput, EstimationData, Advisor } from '@/types';
 
 const API = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
 
@@ -20,14 +20,4 @@ export async function generatePdf(data: EstimationData): Promise<Blob> {
   });
   if (!r.ok) throw new Error('Generation echouee');
   return r.blob();
-}
-
-export async function sectorEstimate(input: SectorInput): Promise<SectorEstimate> {
-  const r = await fetch(`${API}/api/sector`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Recherche echouee');
-  return r.json();
 }
