@@ -143,25 +143,26 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
 
       <Section title="Rénovation énergétique (DPE Wizard)" icon={Zap} hint="optionnel — import du chiffrage énergie">
         {p.dpePdfName ? (
-          <div className="flex items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-            <span className="truncate text-slate-700">📄 {p.dpePdfName}</span>
-            <button type="button" className="text-slate-400 hover:text-red-600" onClick={clearDpe} aria-label="Retirer"><X className="h-4 w-4" /></button>
-          </div>
+          <>
+            <div className="flex items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+              <span className="truncate text-slate-700">📄 {p.dpePdfName}</span>
+              <button type="button" className="text-slate-400 hover:text-red-600" onClick={clearDpe} aria-label="Retirer"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="grid grid-cols-6 gap-3 mt-3">
+              <div className="col-span-3"><label className="label">Scénario retenu</label>
+                <select className="input" value={p.dpeScenario || ''} onChange={(e) => set('dpeScenario', e.target.value)}>
+                  <option value="meilleure lettre">Meilleure lettre</option>
+                  <option value="meilleure rentabilite">Meilleure rentabilité</option>
+                </select></div>
+            </div>
+          </>
         ) : (
           <label className="flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-sm text-slate-500 hover:border-navy hover:text-navy transition-colors">
             <Upload className="h-4 w-4" /> Déposer le PDF DPE Wizard
             <input type="file" accept="application/pdf" className="hidden" onChange={onDpeFile} />
           </label>
         )}
-        <div className="grid grid-cols-6 gap-3 mt-3">
-          <div className="col-span-3"><label className="label">Scénario retenu</label>
-            <select className="input" value={p.dpeScenario || ''} onChange={(e) => set('dpeScenario', e.target.value)} disabled={!p.dpePdfName}>
-              <option value="">—</option>
-              <option value="meilleure rentabilite">Meilleure rentabilité</option>
-              <option value="meilleure lettre">Meilleure lettre</option>
-            </select></div>
-        </div>
-        <p className="text-xs text-slate-400 mt-1">Claude lit le PDF, extrait la synthèse financière et l'ajoute au total (hors aides), sans double comptage avec les postes ci-dessus.</p>
+        <p className="text-xs text-slate-400 mt-1">Importez le PDF DPE Wizard : Claude en extrait la synthèse financière et l'ajoute au total (hors aides), sans double comptage avec les postes ci-dessus. Le scénario apparaît une fois le PDF importé.</p>
       </Section>
 
       <button className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base" disabled={!valid || loading} onClick={run}>
