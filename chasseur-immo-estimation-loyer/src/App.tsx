@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { PropertyInput, Advisor } from '@/types';
 import { estimate, generatePdf } from '@/lib/api';
 import { PropertyForm } from '@/components/PropertyForm';
@@ -9,10 +9,33 @@ type View = 'home' | 'rentForm' | 'rentDone' | 'works';
 
 const PRIX_SECTEUR_URL = 'https://www.meilleursagents.com/prix-immobilier/';
 
+// Routage URL leger : /travaux et /loyer ouvrent directement le bon formulaire.
+const pathToView = (path: string): View =>
+  path.startsWith('/travaux') ? 'works'
+  : path.startsWith('/loyer') ? 'rentForm'
+  : 'home';
+const viewToPath = (v: View): string =>
+  v === 'works' ? '/travaux'
+  : v === 'rentForm' || v === 'rentDone' ? '/loyer'
+  : '/';
+
 export default function App() {
-  const [view, setView] = useState<View>('home');
+  const [view, setViewState] = useState<View>(() => pathToView(window.location.pathname));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const setView = (v: View) => {
+    setViewState(v);
+    const path = viewToPath(v);
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+  };
+
+  // Synchronise sur le bouton precedent/suivant du navigateur.
+  useEffect(() => {
+    const onPop = () => setViewState(pathToView(window.location.pathname));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Estimation de loyer : recherche IA -> generation PDF -> telechargement (flux direct).
   async function handleEstimate(p: PropertyInput, a: Partial<Advisor>) {
