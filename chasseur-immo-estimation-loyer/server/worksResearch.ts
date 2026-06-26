@@ -31,11 +31,18 @@ function parseJson(text: string): any {
  * Renvoie un WorksEstimate a afficher (aucun PDF).
  */
 export async function worksResearch(input: WorksInput): Promise<WorksEstimate> {
+  // PDF DPE Wizard : lu nativement par Claude via un bloc "document".
+  const content: any[] = [];
+  if (input.dpePdfBase64) {
+    content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: input.dpePdfBase64 } });
+  }
+  content.push({ type: 'text', text: buildWorksPrompt(input) });
+
   const msg = await client.messages.create({
     model: MODEL,
     max_tokens: 5000,
     system: WORKS_SYSTEM,
-    messages: [{ role: 'user', content: buildWorksPrompt(input) }],
+    messages: [{ role: 'user', content }],
   });
 
   const data = parseJson(collectText(msg.content)) as WorksEstimate;
@@ -54,5 +61,11 @@ export async function worksResearch(input: WorksInput): Promise<WorksEstimate> {
     data.fourchetteHaute = Math.round(total * 1.15);
     if (input.surface > 0) data.coutM2 = Math.round(total / input.surface);
   }
+  // Bloc B (energie) : total = somme des lignes si presentes ; total general = A + B.
+  const energyTotal = data.energy?.lines?.length
+    ? Math.round(data.energy.lines.reduce((s, l) => s + (Number(l.cout) || 0), 0))
+    : Number(data.energy?.total) || 0;
+  if (data.energy) data.energy.total = energyTotal;
+  data.totalGeneral = (data.totalProjet || 0) + energyTotal;
   return data;
 }

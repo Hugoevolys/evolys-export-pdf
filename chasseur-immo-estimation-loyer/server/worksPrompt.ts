@@ -47,9 +47,14 @@ Fourchette = [ totalProjet x 0,90 ; totalProjet x 1,15 ].
 CONTROLE : recalcule cout/m2 = totalProjet / surface et verifie qu'il tombe dans la borne du type de renovation declare ; sinon, signale dans 'hypotheses' et reexamine les quantites (ne LISSE jamais le chiffre).
 
 # EXCLUSIONS (a rappeler dans hypotheses, sauf demande contraire)
-Mobilier, electromenager hors cuisine equipee, honoraires de maitrise d'oeuvre, frais de copro, diagnostics, desamiantage. La renovation energetique fine (DPE) n'est PAS chiffree ici.
+Mobilier, electromenager hors cuisine equipee, honoraires de maitrise d'oeuvre, frais de copro, diagnostics, desamiantage.
 
-# SORTIE : reponds UNIQUEMENT par un objet JSON valide conforme au schema, sans texte autour ni markdown. Toutes les chaines en francais avec ORTHOGRAPHE et ACCENTS corrects. Les montants sont des NOMBRES en euros (pas de chaines, pas de symbole). Coherence obligatoire : sousTotalTravaux = somme des lines.sousTotal ; totalProjet = round(sousTotalTravaux x regionalCoef x (1 + provisionAleasPct/100)).`;
+# ONGLET RENOVATION ENERGETIQUE (DPE WIZARD)
+Tu ne calcules JAMAIS toi-meme la renovation energetique. Si un PDF DPE Wizard est JOINT au message (bloc document), lis la table "SYNTHESE FINANCIERE" du rapport "DPE Projete - Scenario de travaux" : pour CHAQUE ligne -> type de travaux, equipement/descriptif, cout estime ; puis l'investissement total, le scenario (meilleure rentabilite / meilleure lettre) et le gain de classe (ex : F -> B). Renvoie ces elements dans 'energy' (lines + total + scenario + dpeGain). Si le conseiller a precise un scenario, retiens CELUI-LA.
+REGLE ANTI-DOUBLE-COMPTAGE (impérative) : si un poste est deja chiffre par DPE Wizard (isolation murs/combles, menuiseries exterieures, chauffage, eau chaude sanitaire...), NE le re-chiffre PAS dans les 'lines' travaux generaux ; retire le doublon cote travaux, garde le montant DPE Wizard, et indique le rapprochement dans 'hypotheses'.
+Les montants energie sont "hors aides" (MaPrimeRenov', CEE, eco-PTZ) : rappelle-le dans energy.note. Si AUCUN PDF n'est joint, n'invente rien : laisse 'energy' absent et signale dans 'hypotheses' que la renovation energetique n'est pas chiffree.
+
+# SORTIE : reponds UNIQUEMENT par un objet JSON valide conforme au schema, sans texte autour ni markdown. Toutes les chaines en francais avec ORTHOGRAPHE et ACCENTS corrects. Les montants sont des NOMBRES en euros (pas de chaines, pas de symbole). Coherence obligatoire : sousTotalTravaux = somme des lines.sousTotal ; totalProjet = round(sousTotalTravaux x regionalCoef x (1 + provisionAleasPct/100)) ; totalGeneral = totalProjet + (energy.total si present, sinon 0).`;
 
 export const WORKS_SCHEMA_HINT = `{
   "recap": "Appartement 55 m2, 15 rue X 76000 Rouen, etat a renover, standing Confort, coef regional 0,92 (Normandie).",
@@ -68,6 +73,17 @@ export const WORKS_SCHEMA_HINT = `{
   "fourchetteHaute": 0,              // round(totalProjet * 1.15)
   "coutM2": 0,                       // round(totalProjet / surface)
   "positionnement": "~ 950 EUR/m2 : coherent avec une renovation complete (borne 900-1600).",
+  "energy": {                         // UNIQUEMENT si un PDF DPE Wizard est joint, sinon OMETTRE
+    "scenario": "meilleure lettre",
+    "dpeGain": "F -> B",
+    "lines": [
+      { "type": "Isolation des murs", "equipement": "ITI laine de roche 75% des murs", "cout": 2295 },
+      { "type": "Chauffage", "equipement": "PAC air-air COP 3.0", "cout": 9000 }
+    ],
+    "total": 14135,
+    "note": "Montants hors aides (MaPrimeRenov', CEE, eco-PTZ)."
+  },
+  "totalGeneral": 0,                  // totalProjet + energy.total (= totalProjet si pas d'energy)
   "hypotheses": [
     "Quantites de menuiseries estimees a 6 fenetres (non precise).",
     "Hors mobilier, electromenager, honoraires, diagnostics, desamiantage.",
@@ -97,6 +113,9 @@ export function buildWorksPrompt(p: WorksInput): string {
     p.windows ? `Nb de menuiseries exterieures : ${p.windows}` : '',
     p.access ? `Acces chantier : ${p.access}` : '',
     p.notes ? `Description / contraintes : ${p.notes}` : '',
+    p.dpePdfBase64
+      ? `Renovation energetique : un PDF DPE Wizard est JOINT (bloc document)${p.dpeScenario ? ` ; scenario retenu : ${p.dpeScenario}` : ''}. Extrais sa SYNTHESE FINANCIERE, applique l'anti-double-comptage et renseigne 'energy'.`
+      : `Renovation energetique : aucun PDF DPE Wizard fourni -> laisse 'energy' absent.`,
   ].filter(Boolean);
 
   return `Etablis l'estimation chiffree des travaux pour le bien suivant :

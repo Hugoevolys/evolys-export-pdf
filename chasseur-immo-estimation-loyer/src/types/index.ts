@@ -147,6 +147,19 @@ export interface WorksInput {
   waterPoints?: number;               // nb points d'eau (plomberie)
   windows?: number;                   // nb menuiseries exterieures
   notes?: string;                     // description libre + contraintes
+  // Renovation energetique (DPE Wizard) — PDF lu nativement par Claude
+  dpePdfBase64?: string;              // PDF en base64 (sans prefixe data:)
+  dpePdfName?: string;
+  dpeScenario?: 'meilleure rentabilite' | 'meilleure lettre' | '';
+}
+
+/** Bloc B : renovation energetique importee de DPE Wizard (non recalculee). */
+export interface EnergyBlock {
+  scenario: string;                   // "meilleure lettre"
+  dpeGain?: string;                   // "F -> B"
+  lines: { type: string; equipement?: string; cout: number }[];
+  total: number;                      // investissement total (hors aides)
+  note?: string;
 }
 
 /** Une ligne du detail par poste. */
@@ -170,8 +183,10 @@ export interface WorksEstimate {
   totalProjet: number;                // total central
   fourchetteBasse: number;
   fourchetteHaute: number;
-  coutM2: number;                     // total / surface
+  coutM2: number;                     // total travaux / surface
   positionnement: string;             // vs reperes marche
+  energy?: EnergyBlock;               // bloc B (si PDF DPE Wizard fourni)
+  totalGeneral: number;               // bloc A (totalProjet) + energy.total
   hypotheses: string[];               // inclusions / exclusions / reserves
   disclaimer: string;
 }
