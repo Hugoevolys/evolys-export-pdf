@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "version": "1.0",
+    "date": "2025-2026",
+    "note": "Prix TTC, fourniture + pose, moyennes nationales, standing Confort = base 1,00. Editez ce fichier pour mettre a jour les prix sans toucher au code."
+  },
+  "standingCoef": { "essentiel": 0.85, "confort": 1.0, "prestige": 1.4 },
+  "coherenceM2": [
+    { "type": "Rafraichissement", "bas": 150, "haut": 400 },
+    { "type": "Renovation partielle", "bas": 400, "haut": 900 },
+    { "type": "Renovation complete", "bas": 900, "haut": 1600 },
+    { "type": "Renovation lourde / restructuration", "bas": 1600, "haut": 2500 }
+  ],
+  "regionalCoef": [
+    { "zone": "Paris intra-muros (75)", "bas": 1.25, "haut": 1.35, "repere": "Logistique dense, stationnement, charges elevees" },
+    { "zone": "Ile-de-France hors Paris (77,78,91,92,93,94,95)", "bas": 1.15, "haut": 1.25, "repere": "+15 a +25 % vs national" },
+    { "zone": "Cote d'Azur / PACA littoral (06,83)", "bas": 1.1, "haut": 1.15, "repere": "Tension forte, saisonnalite" },
+    { "zone": "Corse (2A,2B)", "bas": 1.15, "haut": 1.2, "repere": "Insularite, transport materiaux" },
+    { "zone": "Metropoles dynamiques (Lyon 69, Haute-Savoie 74, Bordeaux 33)", "bas": 1.05, "haut": 1.1, "repere": "Demande > offre artisanale" },
+    { "zone": "Grandes villes (Nantes 44, Toulouse 31, Lille 59, Strasbourg 67, Rennes 35)", "bas": 1.0, "haut": 1.05, "repere": "Proche moyenne nationale" },
+    { "zone": "Moyenne nationale / villes moyennes", "bas": 1.0, "haut": 1.0, "repere": "Reference" },
+    { "zone": "Occitanie & Nouvelle-Aquitaine hors littoral", "bas": 0.95, "haut": 1.0, "repere": "Legerement sous la moyenne" },
+    { "zone": "Bretagne, Pays de la Loire, Centre-Val de Loire", "bas": 0.92, "haut": 0.97, "repere": "Parmi les plus competitifs" },
+    { "zone": "Grand Est, Hauts-de-France, Normandie (76,27,14,50,61), Bourgogne-FC", "bas": 0.88, "haut": 0.95, "repere": "Cout main-d'oeuvre plus bas" },
+    { "zone": "Zones rurales faible densite (23,48,15,08...)", "bas": 0.85, "haut": 0.92, "repere": "Faible cout mais offre artisanale rare, deplacements" }
+  ],
+  "accessSurcharge": "+5 a +10 % possible en hyper-centre ou etage eleve sans ascenseur",
+  "priceBase": [
+    { "lot": "Demolition / depose / evacuation", "postes": [
+      { "poste": "Depose cloison / mur non porteur", "unite": "m2", "bas": 25, "haut": 45 },
+      { "poste": "Depose revetement de sol", "unite": "m2", "bas": 10, "haut": 25 },
+      { "poste": "Curage complet (appartement vide)", "unite": "m2", "bas": 40, "haut": 90 },
+      { "poste": "Depose cuisine", "unite": "forfait", "bas": 300, "haut": 600 },
+      { "poste": "Depose salle de bain", "unite": "forfait", "bas": 400, "haut": 800 },
+      { "poste": "Evacuation gravats (benne + main-d'oeuvre)", "unite": "benne", "bas": 250, "haut": 500 }
+    ]},
+    { "lot": "Gros oeuvre / maconnerie", "postes": [
+      { "poste": "Ouverture mur porteur + pose IPN", "unite": "ouverture", "bas": 2500, "haut": 5000 },
+      { "poste": "Creation cloison (ossature + placo)", "unite": "m2", "bas": 40, "haut": 70 },
+      { "poste": "Chape", "unite": "m2", "bas": 30, "haut": 50 },
+      { "poste": "Ragreage / preparation de sol", "unite": "m2", "bas": 15, "haut": 30 }
+    ]},
+    { "lot": "Platrerie / isolation interieure", "postes": [
+      { "poste": "Doublage placo BA13 sur ossature", "unite": "m2", "bas": 30, "haut": 55 },
+      { "poste": "Doublage isolant ITI (placo + isolant)", "unite": "m2", "bas": 45, "haut": 90 },
+      { "poste": "Faux plafond placo", "unite": "m2", "bas": 35, "haut": 60 },
+      { "poste": "Isolation combles (soufflee / deroulee)", "unite": "m2", "bas": 20, "haut": 50 },
+      { "poste": "Enduit, bandes, finition avant peinture", "unite": "m2", "bas": 10, "haut": 25 }
+    ]},
+    { "lot": "Electricite", "postes": [
+      { "poste": "Mise aux normes complete NF C15-100", "unite": "m2", "bas": 80, "haut": 130 },
+      { "poste": "Renovation electrique partielle", "unite": "m2", "bas": 40, "haut": 90 },
+      { "poste": "Remplacement tableau electrique", "unite": "forfait", "bas": 1200, "haut": 2000 },
+      { "poste": "Point electrique (prise / interrupteur)", "unite": "point", "bas": 80, "haut": 150 },
+      { "poste": "Point lumineux", "unite": "point", "bas": 90, "haut": 160 }
+    ]},
+    { "lot": "Plomberie", "postes": [
+      { "poste": "Point d'eau cree ou deplace", "unite": "point", "bas": 500, "haut": 1000 },
+      { "poste": "Reseau plomberie complet", "unite": "m2", "bas": 80, "haut": 150 },
+      { "poste": "Chauffe-eau electrique (fourni pose)", "unite": "unite", "bas": 600, "haut": 1500 }
+    ]},
+    { "lot": "Chauffage", "postes": [
+      { "poste": "Radiateur electrique (fourni pose)", "unite": "unite", "bas": 400, "haut": 900 },
+      { "poste": "Chauffage electrique complet (~100 m2)", "unite": "forfait", "bas": 4000, "haut": 7000 },
+      { "poste": "Pompe a chaleur air-air (pose comprise)", "unite": "forfait", "bas": 5000, "haut": 9000 },
+      { "poste": "Pompe a chaleur air-eau (pose comprise)", "unite": "forfait", "bas": 8000, "haut": 16000 },
+      { "poste": "Plancher chauffant", "unite": "m2", "bas": 70, "haut": 110 }
+    ]},
+    { "lot": "Menuiseries exterieures", "postes": [
+      { "poste": "Fenetre PVC double vitrage (fournie posee)", "unite": "unite", "bas": 500, "haut": 1000 },
+      { "poste": "Fenetre aluminium double vitrage", "unite": "unite", "bas": 700, "haut": 1400 },
+      { "poste": "Porte-fenetre / baie", "unite": "unite", "bas": 900, "haut": 1800 },
+      { "poste": "Volet roulant", "unite": "unite", "bas": 400, "haut": 900 },
+      { "poste": "Porte d'entree", "unite": "unite", "bas": 1200, "haut": 3500 }
+    ]},
+    { "lot": "Menuiseries interieures & revetements de sol", "postes": [
+      { "poste": "Porte interieure (fournie posee)", "unite": "unite", "bas": 250, "haut": 600 },
+      { "poste": "Placard / rangement sur mesure", "unite": "ml", "bas": 400, "haut": 1200 },
+      { "poste": "Carrelage (fourni pose)", "unite": "m2", "bas": 50, "haut": 110 },
+      { "poste": "Parquet stratifie (fourni pose)", "unite": "m2", "bas": 35, "haut": 70 },
+      { "poste": "Parquet contrecolle / massif (fourni pose)", "unite": "m2", "bas": 70, "haut": 140 },
+      { "poste": "Sol souple PVC / lino", "unite": "m2", "bas": 30, "haut": 60 },
+      { "poste": "Plinthes", "unite": "ml", "bas": 10, "haut": 30 }
+    ]},
+    { "lot": "Peinture & finitions", "postes": [
+      { "poste": "Peinture murs + plafonds (par m2 de sol traite)", "unite": "m2", "bas": 30, "haut": 50 },
+      { "poste": "Preparation lourde (rebouchage, enduit) en supplement", "unite": "m2", "bas": 10, "haut": 20 },
+      { "poste": "Pose papier peint / toile", "unite": "m2", "bas": 20, "haut": 40 }
+    ]},
+    { "lot": "Pieces d'eau & cuisine (forfaits cles en main)", "postes": [
+      { "poste": "Cuisine equipee entree de gamme (fournie posee)", "unite": "forfait", "bas": 5000, "haut": 9000 },
+      { "poste": "Cuisine equipee milieu de gamme", "unite": "forfait", "bas": 9000, "haut": 15000 },
+      { "poste": "Cuisine equipee haut de gamme", "unite": "forfait", "bas": 15000, "haut": 30000 },
+      { "poste": "Renovation complete salle de bain (~5 m2)", "unite": "forfait", "bas": 5000, "haut": 10000 },
+      { "poste": "Salle de bain haut de gamme", "unite": "forfait", "bas": 10000, "haut": 18000 },
+      { "poste": "Douche a l'italienne", "unite": "forfait", "bas": 2000, "haut": 4500 },
+      { "poste": "WC (fourni pose)", "unite": "unite", "bas": 300, "haut": 700 }
+    ]},
+    { "lot": "Exterieur (maison / immeuble)", "postes": [
+      { "poste": "Refection de toiture", "unite": "m2", "bas": 150, "haut": 300 },
+      { "poste": "Ravalement de facade", "unite": "m2", "bas": 50, "haut": 120 },
+      { "poste": "Isolation thermique par l'exterieur (ITE)", "unite": "m2", "bas": 110, "haut": 200 }
+    ]}
+  ]
+}

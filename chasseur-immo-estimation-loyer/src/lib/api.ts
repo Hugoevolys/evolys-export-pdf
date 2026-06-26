@@ -31,3 +31,13 @@ export async function worksEstimate(input: WorksInput): Promise<WorksEstimate> {
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Estimation echouee');
   return r.json();
 }
+
+export async function worksPdf(data: WorksEstimate): Promise<Blob> {
+  const r = await fetch(`${API}/api/works/pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error('Export PDF echoue');
+  return r.blob();
+}

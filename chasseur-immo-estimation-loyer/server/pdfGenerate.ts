@@ -4,28 +4,28 @@ import * as path from 'node:path';
 import type { EstimationData } from '../src/types/index.ts';
 
 // ---------- Charte Evolys ----------
-const NAVY = '#00286E';
+export const NAVY = '#00286E';
 const NAVY_DARK = '#001B4A';
-const LIGHT = '#DDF3FF';
+export const LIGHT = '#DDF3FF';
 const BLUE = '#6DCAFF';
-const ACCENT = '#FF9A41';
+export const ACCENT = '#FF9A41';
 
 // ---------- Mentions legales Evolys (fixes) ----------
-const EVOLYS_LEGAL_NAME = 'SAS ARM IMMO';
-const EVOLYS_LEGAL_ADDRESS = "809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont";
-const EVOLYS_SIREN = '927 684 944';
-const EVOLYS_CARD = 'CPI76022025000000001';
-const EVOLYS_REP = 'M. MAHIEUX Axel';
+export const EVOLYS_LEGAL_NAME = 'SAS ARM IMMO';
+export const EVOLYS_LEGAL_ADDRESS = "809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont";
+export const EVOLYS_SIREN = '927 684 944';
+export const EVOLYS_CARD = 'CPI76022025000000001';
+export const EVOLYS_REP = 'M. MAHIEUX Axel';
 
 // ---------- Formatage ----------
-const euro = (n: number) =>
+export const euro = (n: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
 const eurM2 = (n: number) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 const m2cap = (n: number) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n);
 
-const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const esc = (s = '') => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const rich = (s = '') => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
 function statutClass(tone: string): string {
@@ -35,7 +35,7 @@ function statutClass(tone: string): string {
 }
 
 /** Logo Evolys blanc (pour la banniere navy) en data URI. */
-function logoWhiteDataUri(): string {
+export function logoWhiteDataUri(): string {
   const p = path.join(process.cwd(), 'server/assets/evolys-logo-white.png');
   if (!fs.existsSync(p)) return '';
   return `data:image/png;base64,${fs.readFileSync(p).toString('base64')}`;

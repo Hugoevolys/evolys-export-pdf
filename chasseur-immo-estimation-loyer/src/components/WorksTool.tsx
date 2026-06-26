@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import type { WorksInput, WorksEstimate } from '@/types';
-import { worksEstimate } from '@/lib/api';
-import { Loader2, Search, MapPin, Building2, Hammer, ArrowLeft, RotateCcw, Zap, Upload, X } from 'lucide-react';
+import { worksEstimate, worksPdf } from '@/lib/api';
+import { Loader2, Search, MapPin, Building2, Hammer, ArrowLeft, RotateCcw, Zap, Upload, X, FileDown } from 'lucide-react';
 
 const euro = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
 const cap = (v: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
@@ -172,6 +172,18 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
 }
 
 function WorksResult({ data, onReset, onBack }: { data: WorksEstimate; onReset: () => void; onBack: () => void }) {
+  const [exporting, setExporting] = useState(false);
+  async function exportPdf() {
+    setExporting(true);
+    try {
+      const blob = await worksPdf(data);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'estimation_travaux.pdf'; a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* silencieux */ }
+    finally { setExporting(false); }
+  }
   return (
     <div className="card space-y-6">
       <button className="text-sm text-navy/70 hover:text-navy flex items-center gap-1" onClick={onBack}>
@@ -273,11 +285,16 @@ function WorksResult({ data, onReset, onBack }: { data: WorksEstimate; onReset: 
         <strong>Note.</strong> {data.disclaimer}
       </div>
 
-      <div className="flex justify-between pt-2">
+      <div className="flex flex-wrap justify-between gap-2 pt-2">
         <button className="btn-ghost" onClick={onBack}>Accueil</button>
-        <button className="btn-primary flex items-center gap-2" onClick={onReset}>
-          <RotateCcw className="h-4 w-4" /> Nouvelle estimation
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-ghost flex items-center gap-2" onClick={exportPdf} disabled={exporting}>
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />} Exporter en PDF
+          </button>
+          <button className="btn-primary flex items-center gap-2" onClick={onReset}>
+            <RotateCcw className="h-4 w-4" /> Nouvelle estimation
+          </button>
+        </div>
       </div>
     </div>
   );

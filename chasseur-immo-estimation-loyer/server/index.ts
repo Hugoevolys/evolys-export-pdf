@@ -4,6 +4,7 @@ import cors from 'cors';
 import { research } from './research.ts';
 import { worksResearch } from './worksResearch.ts';
 import { generatePdf } from './pdfGenerate.ts';
+import { generateWorksPdf } from './worksPdfGenerate.ts';
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN || '*';
@@ -48,6 +49,21 @@ app.post('/api/works', async (req, res) => {
     if (!input?.postalCode || !input?.surface) return res.status(400).json({ error: 'Indiquez au moins le code postal et la surface.' });
     const data = await worksResearch(input);
     res.json(data);
+  } catch (e: any) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 3b) Export PDF d'une estimation de travaux (WorksEstimate validee -> PDF).
+app.post('/api/works/pdf', async (req, res) => {
+  try {
+    const data = req.body;
+    if (!data?.totalProjet && !data?.lines) return res.status(400).json({ error: 'Donnees d estimation manquantes.' });
+    const pdf = await generateWorksPdf(data);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="estimation_travaux.pdf"');
+    res.send(pdf);
   } catch (e: any) {
     console.error(e);
     res.status(500).json({ error: e.message });
