@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { research } from './research.ts';
+import { worksResearch } from './worksResearch.ts';
 import { generatePdf } from './pdfGenerate.ts';
 
 const app = express();
@@ -34,6 +35,19 @@ app.post('/api/generate', async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="estimation_loyer_${slug}.pdf"`);
     res.send(pdf);
+  } catch (e: any) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 3) Estimation de travaux : WorksInput -> WorksEstimate (affichage, pas de PDF).
+app.post('/api/works', async (req, res) => {
+  try {
+    const input = req.body;
+    if (!input?.postalCode || !input?.surface) return res.status(400).json({ error: 'Indiquez au moins le code postal et la surface.' });
+    const data = await worksResearch(input);
+    res.json(data);
   } catch (e: any) {
     console.error(e);
     res.status(500).json({ error: e.message });

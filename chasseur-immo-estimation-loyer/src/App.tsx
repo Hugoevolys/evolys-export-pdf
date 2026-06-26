@@ -2,9 +2,10 @@ import { useState } from 'react';
 import type { PropertyInput, Advisor } from '@/types';
 import { estimate, generatePdf } from '@/lib/api';
 import { PropertyForm } from '@/components/PropertyForm';
-import { CheckCircle2, FileText, TrendingUp, ChevronRight, ExternalLink } from 'lucide-react';
+import { WorksTool } from '@/components/WorksTool';
+import { CheckCircle2, FileText, TrendingUp, Hammer, ChevronRight, ExternalLink } from 'lucide-react';
 
-type View = 'home' | 'rentForm' | 'rentDone';
+type View = 'home' | 'rentForm' | 'rentDone' | 'works';
 
 const PRIX_SECTEUR_URL = 'https://www.meilleursagents.com/prix-immobilier/';
 
@@ -30,7 +31,10 @@ export default function App() {
     finally { setLoading(false); }
   }
 
-  const headerTag = view.startsWith('rent') ? 'Estimation de loyer' : 'Outils conseiller';
+  const headerTag =
+    view === 'works' ? 'Estimation des travaux'
+    : view.startsWith('rent') ? 'Estimation de loyer'
+    : 'Outils conseiller';
 
   return (
     <div className="min-h-screen">
@@ -53,12 +57,18 @@ export default function App() {
               <h1 className="font-title text-2xl text-navy">Outils d'estimation</h1>
               <p className="text-sm text-slate-500 mt-1">Choisissez un outil.</p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <ToolCard
                 icon={FileText}
                 title="Estimation de loyer longue durée"
                 desc="Statut réglementaire, encadrement, loyer de marché → PDF téléchargeable."
                 onClick={() => { setView('rentForm'); setError(''); }}
+              />
+              <ToolCard
+                icon={Hammer}
+                title="Estimation des travaux"
+                desc="Chiffrage détaillé par poste (base de prix + coef. régional). Réponse à l'écran."
+                onClick={() => { setView('works'); setError(''); }}
               />
               <ToolCard
                 icon={TrendingUp}
@@ -72,6 +82,8 @@ export default function App() {
         )}
 
         {view === 'rentForm' && <PropertyForm onSubmit={handleEstimate} loading={loading} />}
+
+        {view === 'works' && <WorksTool onBack={() => { setView('home'); setError(''); }} />}
 
         {view === 'rentDone' && (
           <div className="card text-center py-12">

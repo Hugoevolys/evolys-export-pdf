@@ -1,4 +1,4 @@
-import type { PropertyInput, EstimationData, Advisor } from '@/types';
+import type { PropertyInput, EstimationData, Advisor, WorksInput, WorksEstimate } from '@/types';
 
 const API = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || '';
 
@@ -20,4 +20,14 @@ export async function generatePdf(data: EstimationData): Promise<Blob> {
   });
   if (!r.ok) throw new Error('Generation echouee');
   return r.blob();
+}
+
+export async function worksEstimate(input: WorksInput): Promise<WorksEstimate> {
+  const r = await fetch(`${API}/api/works`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Estimation echouee');
+  return r.json();
 }

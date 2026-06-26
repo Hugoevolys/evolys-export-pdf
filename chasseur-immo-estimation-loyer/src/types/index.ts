@@ -118,3 +118,60 @@ export interface EstimationData {
   // Pied de page
   footerAddress: string;      // "20 rue Bourget, 69009 Lyon"
 }
+
+// ============================================================
+// Outil 3 : Estimation des couts de travaux (renovation)
+// ============================================================
+
+/** Saisie du formulaire d'estimation de travaux. */
+export interface WorksInput {
+  // Localisation & acces
+  address?: string;
+  postalCode: string;                 // requis (coef regional)
+  city: string;
+  floor?: string;                     // etage
+  elevator?: boolean;
+  access?: string;                    // contraintes acces chantier (texte court)
+  propertyKind: 'appartement' | 'maison' | 'immeuble' | 'local'; // requis
+  // Bien
+  surface: number;                    // requis (m2)
+  rooms?: number;
+  epoch?: 'avant 1948' | '1948-1974' | 'apres 1974' | '';
+  ceilingHeight?: string;
+  // Ampleur & standing
+  condition: string;                  // a rafraichir / a renover / a restructurer (requis)
+  renoType: string;                   // rafraichissement / partielle / complete / lourde (requis)
+  standing: 'essentiel' | 'confort' | 'prestige'; // requis
+  // Postes (cle = poste coche) + quantites clefs facultatives
+  postes: string[];
+  waterPoints?: number;               // nb points d'eau (plomberie)
+  windows?: number;                   // nb menuiseries exterieures
+  notes?: string;                     // description libre + contraintes
+}
+
+/** Une ligne du detail par poste. */
+export interface WorksLine {
+  lot: string;                        // "Demolition" | "Technique" | "Second oeuvre" | "Finitions" | "Equipements" | "Exterieur"
+  poste: string;                      // "Mise aux normes electrique"
+  quantite: string;                   // "55 m2" | "3 points" | "forfait"
+  pu: string;                         // prix unitaire retenu, ex "105 EUR/m2"
+  sousTotal: number;                  // EUR
+}
+
+/** Resultat affiche a l'ecran (aucun PDF). */
+export interface WorksEstimate {
+  recap: string;                      // rappel du bien
+  standing: string;                   // standing retenu
+  regionalZone?: string;              // zone deduite du CP
+  regionalCoef: number;               // coef regional applique
+  lines: WorksLine[];                 // detail par poste
+  sousTotalTravaux: number;           // somme postes x standing
+  provisionAleasPct: number;          // ex 12 (%)
+  totalProjet: number;                // total central
+  fourchetteBasse: number;
+  fourchetteHaute: number;
+  coutM2: number;                     // total / surface
+  positionnement: string;             // vs reperes marche
+  hypotheses: string[];               // inclusions / exclusions / reserves
+  disclaimer: string;
+}
