@@ -27,7 +27,7 @@ export function PropertyForm({ onSubmit, loading }: {
 }) {
   const [p, setP] = useState<PropertyInput>(empty);
   // Le rôle est toujours « Chasseur immobilier » : fixe, non saisi par le conseiller.
-  const [advisor, setAdvisor] = useState<Partial<Advisor>>({ company: 'Evolys', advisorName: '', advisorLastName: '', rsac: '', role: 'Chasseur immobilier', client: '' });
+  const [advisor, setAdvisor] = useState<Partial<Advisor>>({ company: 'Evolys', advisorName: '', advisorLastName: '', rsac: '', rsacCity: '', proAddress: '', role: 'Chasseur immobilier', client: '' });
   const set = (k: keyof PropertyInput, v: any) => setP((s) => ({ ...s, [k]: v }));
   const setA = (k: keyof Advisor, v: any) => setAdvisor((s) => ({ ...s, [k]: v }));
   // Coche/décoche une option multi-select a partir de l'etat le plus recent (robuste).
@@ -39,7 +39,8 @@ export function PropertyForm({ onSubmit, loading }: {
 
   const valid = !!(
     p.address && p.postalCode && p.city && p.surface > 0 &&
-    advisor.advisorName?.trim() && advisor.advisorLastName?.trim() && advisor.rsac?.trim()
+    advisor.advisorName?.trim() && advisor.advisorLastName?.trim() && advisor.rsac?.trim() &&
+    advisor.rsacCity?.trim() && advisor.proAddress?.trim()
   );
 
   return (
@@ -116,10 +117,14 @@ export function PropertyForm({ onSubmit, loading }: {
             <input className="input" value={advisor.advisorLastName || ''} onChange={(e) => setA('advisorLastName', cap(e.target.value))} placeholder="Martin" /></div>
           <div><label className="label">Numéro RSAC *</label>
             <input className="input" value={advisor.rsac || ''} onChange={(e) => setA('rsac', e.target.value)} placeholder="ex : 902 345 678" /></div>
-          <div><label className="label">À l'attention de (client)</label>
+          <div><label className="label">Ville d'immatriculation RSAC *</label>
+            <input className="input" value={advisor.rsacCity || ''} onChange={(e) => setA('rsacCity', cap(e.target.value))} placeholder="Dieppe" /></div>
+          <div className="col-span-2"><label className="label">Adresse professionnelle *</label>
+            <input className="input" value={advisor.proAddress || ''} onChange={(e) => setA('proAddress', cap(e.target.value))} placeholder="12 rue de l'Exemple, 76200 Dieppe" /></div>
+          <div className="col-span-2"><label className="label">À l'attention de (client)</label>
             <input className="input" value={advisor.client || ''} onChange={(e) => setA('client', cap(e.target.value))} placeholder="M. et Mme Martin" /></div>
         </div>
-        <p className="text-xs text-slate-400 mt-2">Nom, prénom et n° RSAC apparaissent dans les mentions légales en pied de page. Le document est daté automatiquement au jour de la génération.</p>
+        <p className="text-xs text-slate-400 mt-2">Ces informations alimentent les mentions légales en pied de page (agent commercial immobilier, RSAC, EI). Le document est daté automatiquement au jour de la génération.</p>
       </Section>
 
       <button className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-base" disabled={!valid || loading}

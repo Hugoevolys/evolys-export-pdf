@@ -37,6 +37,8 @@ export interface Advisor {
   advisorName: string;        // prenom du conseiller qui etablit l'estimation
   advisorLastName?: string;   // nom du conseiller (mentions legales pied de page)
   rsac?: string;              // numero RSAC du conseiller (mentions legales)
+  rsacCity?: string;          // ville d'immatriculation RSAC
+  proAddress?: string;        // adresse professionnelle du conseiller
   role: string;               // "Chasseur immobilier"
   date: string;               // "03/06/2026"
   client?: string;            // destinataire : "a l'attention de ..."

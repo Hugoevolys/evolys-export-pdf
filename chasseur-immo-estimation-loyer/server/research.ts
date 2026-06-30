@@ -65,11 +65,41 @@ export async function research(input: PropertyInput, advisor?: Partial<Advisor>)
     advisorName: advisor?.advisorName || '',
     advisorLastName: advisor?.advisorLastName,
     rsac: advisor?.rsac,
+    rsacCity: advisor?.rsacCity,
+    proAddress: advisor?.proAddress,
     role: advisor?.role || 'Chasseur immobilier',
     date: advisor?.date || todayFr(),
     client: advisor?.client,
   };
   data.furnished = input.furnished;
   if (!data.footerAddress) data.footerAddress = `${input.address}, ${input.postalCode} ${input.city}`;
+  // "Bien estime" construit a partir de TOUS les champs saisis (l'IA avait tendance
+  // a en resumer/oublier certains). Rien de ce que le conseiller a renseigne n'est perdu.
+  data.bienEstime = buildBienEstime(input);
   return data;
+}
+
+/** Ligne "Bien estime" complete et fidele a la saisie (deterministe). */
+function buildBienEstime(p: PropertyInput): string {
+  const parts: string[] = [
+    `${p.address}, ${p.postalCode} ${p.city}`,
+    `${p.surface} m²`,
+    `T${p.rooms} (séjour + ${p.bedrooms} chambre${p.bedrooms > 1 ? 's' : ''})`,
+  ];
+  if (p.floor) parts.push(`${p.floor} étage${p.elevator ? ' avec ascenseur' : ' sans ascenseur'}`);
+  else if (p.elevator) parts.push('avec ascenseur');
+  parts.push(`DPE ${p.dpe}`);
+  parts.push(p.furnished ? 'location meublée' : 'location nue');
+  if (p.constructionEpoch) parts.push(`époque ${p.constructionEpoch}`);
+  if (p.condition) parts.push(`état : ${p.condition}`);
+  if (p.exterior) parts.push(p.exterior);
+  if (p.annexes) parts.push(p.annexes);
+  if (p.kitchen) parts.push(`cuisine ${p.kitchen.toLowerCase()}`);
+  if (p.heating) parts.push(`chauffage ${p.heating.toLowerCase()}`);
+  if (p.bathrooms) parts.push(`${p.bathrooms} salle(s) d'eau`);
+  if (p.leaseType) parts.push(`bail ${p.leaseType.toLowerCase()}`);
+  if (p.charges) parts.push(`charges ~${p.charges} €/mois`);
+  if (p.alreadyRented) parts.push(`déjà loué : ${p.alreadyRented}`);
+  if (p.notes) parts.push(p.notes);
+  return parts.join(' - ');
 }

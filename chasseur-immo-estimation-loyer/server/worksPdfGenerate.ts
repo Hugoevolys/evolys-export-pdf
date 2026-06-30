@@ -1,8 +1,7 @@
 import puppeteer from 'puppeteer';
 import type { WorksEstimate } from '../src/types/index.ts';
 import {
-  NAVY, LIGHT, ACCENT, euro, esc, logoWhiteDataUri,
-  EVOLYS_LEGAL_NAME, EVOLYS_LEGAL_ADDRESS, EVOLYS_SIREN, EVOLYS_CARD, EVOLYS_REP,
+  NAVY, LIGHT, ACCENT, euro, esc, logoWhiteDataUri, EVOLYS_LEGAL_LINE,
 } from './pdfGenerate.ts';
 
 const todayFr = () => new Date().toLocaleDateString('fr-FR');
@@ -17,9 +16,8 @@ function headerHtml(): string {
 }
 
 function footerHtml(): string {
-  const legal = `Evolys - ${EVOLYS_LEGAL_NAME}, ${EVOLYS_LEGAL_ADDRESS} - SIREN ${EVOLYS_SIREN} - Carte professionnelle ${EVOLYS_CARD} - représentée par ${EVOLYS_REP}`;
   return `<div style="width:100%; color:#fff; background:${NAVY}; box-sizing:border-box; font-family:Helvetica,Arial,sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.35;">${legal}</div>
+    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.35;">${EVOLYS_LEGAL_LINE}</div>
     <div style="font-size:7.5px; padding:2px 16px 5px; display:flex; justify-content:space-between;">
       <span>Evolys - Estimation de travaux (indicative, hors devis)</span>
       <span>Page <span class="pageNumber"></span> - établi le ${esc(todayFr())}</span>

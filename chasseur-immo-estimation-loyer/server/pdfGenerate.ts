@@ -10,12 +10,9 @@ export const LIGHT = '#DDF3FF';
 const BLUE = '#6DCAFF';
 export const ACCENT = '#FF9A41';
 
-// ---------- Mentions legales Evolys (fixes) ----------
-export const EVOLYS_LEGAL_NAME = 'SAS ARM IMMO';
-export const EVOLYS_LEGAL_ADDRESS = "809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont";
-export const EVOLYS_SIREN = '927 684 944';
-export const EVOLYS_CARD = 'CPI76022025000000001';
-export const EVOLYS_REP = 'M. MAHIEUX Axel';
+// ---------- Mentions legales (fixes) ----------
+export const EVOLYS_LEGAL_LINE =
+  "ARM IMMO (Réseau Evolys) — SAS, 809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont — RCS Dieppe 927 684 944 — Carte T n° CPI 7602 2025 000 000 001 (CCI de Rouen Métropole) — Non-détention de fonds.";
 
 // ---------- Formatage ----------
 export const euro = (n: number) =>
@@ -240,9 +237,9 @@ const CSS = `
 function footerTemplate(d: EstimationData): string {
   const left = `${esc(d.advisor.company)} - Estimation locative - ${esc(d.footerAddress)}`;
   const name = [d.advisor.advisorName, d.advisor.advisorLastName].filter(Boolean).join(' ').trim();
-  const company = `Evolys - ${EVOLYS_LEGAL_NAME}, ${EVOLYS_LEGAL_ADDRESS} - SIREN ${EVOLYS_SIREN} - Carte professionnelle ${EVOLYS_CARD} - représentée par ${EVOLYS_REP}`;
+  const company = EVOLYS_LEGAL_LINE;
   const conseiller = name
-    ? `Estimation établie par ${esc(name)}, ${esc(d.advisor.role || 'chasseur immobilier')}${d.advisor.rsac ? ` - RSAC ${esc(d.advisor.rsac)}` : ''}`
+    ? `${esc(name)}, agent commercial immobilier immatriculé au RSAC ${esc(d.advisor.rsacCity || '')} n° ${esc(d.advisor.rsac || '')} — EI — ${esc(d.advisor.proAddress || '')} — agissant au nom et pour le compte d'ARM IMMO.`
     : '';
   return `<div style="width:100%; color:#fff; background:${NAVY}; box-sizing:border-box; font-family: Helvetica, Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
     <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.35;">${company}</div>
