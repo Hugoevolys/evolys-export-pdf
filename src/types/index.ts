@@ -7,7 +7,9 @@ export interface GeneralInfo {
   advisorLastName: string;
   advisorPhone: string;
   advisorEmail: string;
-  advisorRsac: string; // n° RSAC du conseiller (mentions légales)
+  advisorRsac: string;     // n° RSAC du conseiller (mentions légales)
+  advisorRsacCity: string; // ville d'immatriculation RSAC
+  advisorAddress: string;  // adresse professionnelle du conseiller
 }
 
 export type MandateType = 'simple' | 'exclusif';

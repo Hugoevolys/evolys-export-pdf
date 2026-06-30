@@ -11,6 +11,7 @@ const emptyInfo: GeneralInfo = {
   clientFirstName: '', clientLastName: '',
   advisorFirstName: '', advisorLastName: '',
   advisorPhone: '', advisorEmail: '', advisorRsac: '',
+  advisorRsacCity: '', advisorAddress: '',
 };
 
 export default function App() {

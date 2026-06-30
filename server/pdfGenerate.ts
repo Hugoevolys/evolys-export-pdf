@@ -128,17 +128,21 @@ function coverHtml(info: GeneralInfo): string {
     </div>`;
 }
 
-// Mentions légales Evolys — constantes (toujours identiques).
+// Mentions légales ARM IMMO — constantes (toujours identiques).
 const EVOLYS_LEGAL =
-  "SAS ARM IMMO — 809 RUE DE CROIXMARE, 76510 SAINT-NICOLAS-D'ALIERMONT — SIREN 927684944. " +
-  'Représentée par Monsieur MAHIEUX Axel, titulaire de la carte professionnelle immobilière numéro CPI76022025000000001.';
+  "ARM IMMO (Réseau Evolys) — SAS, 809 rue de Croixmare, 76510 Saint-Nicolas-d'Aliermont — " +
+  'RCS Dieppe 927 684 944 — Carte T n° CPI 7602 2025 000 000 001 (CCI de Rouen Métropole) — Non-détention de fonds.';
 
-/** Bloc mentions légales (Evolys + conseiller) ajouté en bas de la dernière page. */
+/** Bloc mentions légales (ARM IMMO + conseiller) ajouté en bas de la dernière page. */
 function legalHtml(info: GeneralInfo): string {
-  const advisor = htmlEscape(`${info.advisorLastName} ${info.advisorFirstName}`.trim());
+  const nom = htmlEscape(`${info.advisorLastName} ${info.advisorFirstName}`.trim());
+  const ville = htmlEscape((info.advisorRsacCity || '').trim());
   const rsac = htmlEscape((info.advisorRsac || '').trim());
-  const conseiller = advisor ? `Conseiller : ${advisor}${rsac ? ` — RSAC ${rsac}` : ''}.` : '';
-  return `<div class="legal"><strong>Mentions légales.</strong> ${EVOLYS_LEGAL} ${conseiller}</div>`;
+  const adresse = htmlEscape((info.advisorAddress || '').trim());
+  const conseiller = nom
+    ? `${nom}, agent commercial immobilier immatriculé au RSAC ${ville} n° ${rsac} — EI — ${adresse} — agissant au nom et pour le compte d'ARM IMMO.`
+    : '';
+  return `<div class="legal"><div>${EVOLYS_LEGAL}</div>${conseiller ? `<div style="margin-top:4px;">${conseiller}</div>` : ''}</div>`;
 }
 
 /** Rend un fragment HTML en buffer PDF (une page neuve, fermée après pour libérer sa mémoire). */
