@@ -11,7 +11,7 @@ const KINDS = [['appartement', 'Appartement'], ['maison', 'Maison'], ['immeuble'
 const EPOCHS = ['avant 1948', '1948-1974', 'apres 1974'] as const;
 const CONDITIONS = ['à rafraîchir', 'à rénover', 'à restructurer'] as const;
 const RENOS = ['rafraîchissement', 'partielle', 'complète', 'lourde'] as const;
-const STANDINGS = [['essentiel', 'Essentiel'], ['confort', 'Confort'], ['prestige', 'Prestige']] as const;
+const STANDINGS = [['essentiel', 'Essentiel'], ['prestige', 'Prestige']] as const;
 const POSTES = [
   'Démolition / dépose', 'Création de cloisons', 'Plâtrerie & isolation', 'Électricité', 'Plomberie',
   'Chauffage', 'Menuiseries extérieures', 'Menuiseries intérieures', 'Revêtements de sol', 'Peinture',
@@ -21,7 +21,7 @@ const POSTES = [
 const empty: WorksInput = {
   address: '', postalCode: '', city: '', floor: '', elevator: false, access: '',
   propertyKind: 'appartement', surface: 0, rooms: undefined, epoch: '', ceilingHeight: '',
-  condition: 'à rénover', renoType: 'complète', standing: 'confort',
+  condition: 'à rénover', renoType: 'complète', standing: 'essentiel',
   postes: [], waterPoints: undefined, windows: undefined, notes: '',
 };
 
@@ -115,7 +115,7 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
                   className={clsx('flex-1 px-3 py-2 text-sm font-medium transition-colors', p.standing === v ? 'bg-navy text-white' : 'text-slate-600 hover:bg-slate-50')}>{l}</button>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Essentiel ×0,85 · Confort ×1,00 · Prestige ×1,40</p>
+            <p className="text-xs text-slate-400 mt-1">Essentiel ×0,85 · Prestige ×1,40 (base de prix = niveau Confort)</p>
           </div>
         </div>
       </Section>
@@ -132,9 +132,9 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
           })}
         </div>
         <div className="grid grid-cols-6 gap-3 mt-3">
-          <div className="col-span-2"><label className="label">Nb points d'eau</label>
+          <div className="col-span-3"><label className="label">Nb points d'eau à raccorder/créer</label>
             <input className="input" type="number" value={p.waterPoints || ''} onChange={(e) => set('waterPoints', +e.target.value || undefined)} /></div>
-          <div className="col-span-2"><label className="label">Nb fenêtres</label>
+          <div className="col-span-3"><label className="label">Nb fenêtres à changer</label>
             <input className="input" type="number" value={p.windows || ''} onChange={(e) => set('windows', +e.target.value || undefined)} /></div>
         </div>
         <div className="mt-3"><label className="label">Description libre & contraintes</label>

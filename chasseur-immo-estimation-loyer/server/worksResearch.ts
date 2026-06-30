@@ -41,6 +41,7 @@ export async function worksResearch(input: WorksInput): Promise<WorksEstimate> {
   const msg = await client.messages.create({
     model: MODEL,
     max_tokens: 5000,
+    temperature: 0, // chiffrage deterministe : memes entrees -> meme resultat
     system: WORKS_SYSTEM,
     messages: [{ role: 'user', content }],
   });

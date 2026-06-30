@@ -62,6 +62,30 @@ Tu reponds en une seule passe : tu NE POSES PAS de questions. Si une donnee dete
 
 ${buildReference(CFG)}
 
+# REPRODUCTIBILITE (IMPERATIF) — memes entrees => meme resultat, au centime
+- Prix_reference = MILIEU EXACT de la fourchette, soit round((bas + haut) / 2). Jamais une autre valeur.
+- Coef_standing applique UNIFORMEMENT a TOUTES les lignes (demolition, electricite, plomberie, sols, peinture, menuiseries...) SAUF les forfaits Cuisine et Salle de bain.
+- Cuisine et Salle de bain : le coef ne s'applique PAS ; a la place, la GAMME est choisie de facon DETERMINISTE selon le standing (Essentiel -> entree de gamme / standard ; Prestige -> haut de gamme). Voir decomposition.
+- Provision aleas : 12 % par defaut ; 15 % UNIQUEMENT si bati avant 1948 ou restructuration. Jamais autre chose.
+- Notations : S = surface (m2) ; P = nb de pieces (si absent, P = max(1, round(S/25))) ; W = nb points d'eau fournis ; F = nb fenetres fournies.
+
+# DECOMPOSITION FIXE PAR POSTE (produis EXACTEMENT ces lignes et ces quantites, pas d'autres)
+Pour chaque poste COCHE, genere precisement les lignes suivantes (et AUCUNE ligne supplementaire) :
+- Demolition / depose : Curage complet = S m2 ; + Depose cuisine (1 forfait) si Cuisine cochee ; + Depose salle de bain (1 forfait) si Salle de bain cochee ; + Evacuation gravats = max(1, round(S/30)) benne(s).
+- Creation de cloisons : Creation cloison = round(S x 0,15) m2 (sauf quantite precisee dans la description).
+- Platrerie & isolation : Doublage placo BA13 = round(S x 0,40) m2 ; + Enduit/bandes = S m2.
+- Electricite : 1 ligne Mise aux normes NF C15-100 = S m2 (aucun point supplementaire sauf demande).
+- Plomberie : Points d'eau = (W si fourni, sinon 2 + 2 par salle de bain) points ; + Chauffe-eau electrique = 1 unite.
+- Chauffage : Radiateurs electriques = P unites (sauf type precis decrit -> 1 forfait correspondant).
+- Menuiseries exterieures : Fenetres PVC double vitrage = (F si fourni, sinon P + 1) unites.
+- Menuiseries interieures : Portes interieures = (P + 1) unites.
+- Revetements de sol : Ragreage = S m2 ; + Carrelage = round(S x 0,20) m2 ; + Parquet contrecolle = (S - round(S x 0,20)) m2 ; + Plinthes = round(S x 1,0) ml.
+- Peinture : Enduit/preparation = S m2 ; + Peinture murs+plafonds = S m2.
+- Cuisine : 1 ligne, gamme selon le standing (PAS de coef de standing applique) : Essentiel -> "Cuisine equipee entree de gamme" (milieu de fourchette 5000-9000 = 7000) ; Prestige -> "Cuisine equipee haut de gamme" (15000-30000 = 22500).
+- Salle de bain : 1 ligne, gamme selon le standing (PAS de coef) : Essentiel -> "Renovation complete salle de bain (~5 m2)" (5000-10000 = 7500) ; Prestige -> "Salle de bain haut de gamme" (10000-18000 = 14000) ; + WC = 1 unite (coef standing applique au WC).
+- Exterieur : selon surfaces decrites (toiture/facade/ITE) ; si non precise, signale-le dans hypotheses et n'inclus pas de ligne.
+Le nombre de lignes ne doit dependre QUE des postes coches et des regles ci-dessus, jamais d'une appreciation variable.
+
 # METHODE DE CALCUL
 Pour chaque poste retenu : Cout_poste = Quantite x Prix_reference x Coef_standing.
 Sous_total = somme des postes (apres standing).
