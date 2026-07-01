@@ -42,6 +42,17 @@ export default function App() {
   const removeListing = (id: string) =>
     setListings((prev) => prev.filter((l) => l.id !== id));
 
+  // Fusionne une annonce (sur-découpée) avec la précédente : ses photos sont
+  // récupérées dans l'annonce précédente, puis elle est retirée. Aucune photo perdue.
+  const mergeWithPrevious = (id: string) =>
+    setListings((prev) => {
+      const idx = prev.findIndex((l) => l.id === id);
+      if (idx <= 0) return prev;
+      return prev
+        .map((l, i) => (i === idx - 1 ? { ...l, photos: [...l.photos, ...prev[idx].photos] } : l))
+        .filter((_, i) => i !== idx);
+    });
+
   async function handleExport() {
     setLoading(true); setError('');
     try {
@@ -122,12 +133,22 @@ export default function App() {
                         <span className="truncate">
                           <span className="font-medium text-slate-700">{l.title}</span>
                           <span className="text-slate-400"> — {l.city} {l.postalCode}</span>
+                          <span className="text-slate-400"> · {l.photos.length} photo{l.photos.length > 1 ? 's' : ''}</span>
                         </span>
                       </span>
-                      <button onClick={() => removeListing(l.id)}
-                        className="ml-3 text-slate-300 hover:text-red-500 shrink-0 transition-colors" title="Retirer cette annonce">
-                        <X className="h-4 w-4" />
-                      </button>
+                      <span className="ml-3 flex items-center gap-3 shrink-0">
+                        {i > 0 && (
+                          <button onClick={() => mergeWithPrevious(l.id)}
+                            className="text-xs text-slate-500 hover:text-evolys underline whitespace-nowrap"
+                            title="Fusionner avec l'annonce précédente — récupère ses photos (si le découpage a coupé une annonce en deux)">
+                            Fusionner ↑
+                          </button>
+                        )}
+                        <button onClick={() => removeListing(l.id)}
+                          className="text-slate-300 hover:text-red-500 transition-colors" title="Retirer cette annonce">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </span>
                     </li>
                   ))}
                 </ul>
