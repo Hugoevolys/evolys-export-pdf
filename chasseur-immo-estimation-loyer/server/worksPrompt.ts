@@ -77,8 +77,8 @@ Pour chaque poste COCHE, genere precisement les lignes suivantes (et AUCUNE lign
 - Menuiseries interieures : Portes interieures = (P + 1) unites.
 - Revetements de sol : Ragreage = S m2 ; + Carrelage = round(S x 0,20) m2 ; + Parquet contrecolle = (S - round(S x 0,20)) m2 ; + Plinthes = round(S x 1,0) ml.
 - Peinture : Enduit/preparation = S m2 ; + Peinture murs+plafonds = S m2.
-- Cuisine : 1 ligne : Essentiel -> "Cuisine equipee entree de gamme" au prix BAS (5000) ; Prestige -> "Cuisine equipee haut de gamme" au prix HAUT (30000).
-- Salle de bain : 1 ligne : Essentiel -> "Renovation complete salle de bain (~5 m2)" au prix BAS (5000) ; Prestige -> "Salle de bain haut de gamme" au prix HAUT (18000) ; + WC = 1 unite (prix bas si Essentiel, haut si Prestige).
+- Cuisine : 1 ligne : Essentiel -> "Cuisine equipee entree de gamme" au prix BAS de sa fourchette ; Prestige -> "Cuisine equipee haut de gamme" au prix HAUT.
+- Salle de bain : 1 ligne : Essentiel -> "Renovation complete salle de bain (~5 m2)" au prix BAS de sa fourchette ; Prestige -> "Salle de bain haut de gamme" au prix HAUT ; + WC = 1 unite (prix bas si Essentiel, haut si Prestige).
 - Exterieur : selon surfaces decrites (toiture/facade/ITE) ; si non precise, signale-le dans hypotheses et n'inclus pas de ligne.
 Le nombre de lignes ne doit dependre QUE des postes coches et des regles ci-dessus, jamais d'une appreciation variable.
 

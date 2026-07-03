@@ -16,9 +16,12 @@ function headerHtml(): string {
 }
 
 function footerHtml(): string {
-  return `<div style="width:100%; color:#fff; background:${NAVY}; box-sizing:border-box; font-family:Helvetica,Arial,sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.35;">${EVOLYS_LEGAL_LINE}</div>
-    <div style="font-size:7.5px; padding:2px 16px 5px; display:flex; justify-content:space-between;">
+  // Encadre bleu = mentions legales seules ; ligne Evolys/page en noir dessous.
+  return `<div style="width:100%; box-sizing:border-box; font-family:Helvetica,Arial,sans-serif;">
+    <div style="background:${NAVY}; color:#fff; padding:5px 16px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:6px; opacity:.85; text-align:center; line-height:1.4;">${EVOLYS_LEGAL_LINE}</div>
+    </div>
+    <div style="display:flex; justify-content:space-between; color:#1b2733; font-size:7px; padding:3px 16px 0;">
       <span>Evolys - Estimation de travaux (indicative, hors devis)</span>
       <span>Page <span class="pageNumber"></span> - établi le ${esc(todayFr())}</span>
     </div>

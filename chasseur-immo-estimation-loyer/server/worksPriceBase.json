@@ -88,10 +88,10 @@
       { "poste": "Pose papier peint / toile", "unite": "m2", "bas": 20, "haut": 40 }
     ]},
     { "lot": "Pieces d'eau & cuisine (forfaits cles en main)", "postes": [
-      { "poste": "Cuisine equipee entree de gamme (fournie posee)", "unite": "forfait", "bas": 5000, "haut": 9000 },
-      { "poste": "Cuisine equipee milieu de gamme", "unite": "forfait", "bas": 9000, "haut": 15000 },
+      { "poste": "Cuisine equipee entree de gamme (fournie posee)", "unite": "forfait", "bas": 3500, "haut": 8000 },
+      { "poste": "Cuisine equipee milieu de gamme", "unite": "forfait", "bas": 8000, "haut": 15000 },
       { "poste": "Cuisine equipee haut de gamme", "unite": "forfait", "bas": 15000, "haut": 30000 },
-      { "poste": "Renovation complete salle de bain (~5 m2)", "unite": "forfait", "bas": 5000, "haut": 10000 },
+      { "poste": "Renovation complete salle de bain (~5 m2)", "unite": "forfait", "bas": 3500, "haut": 9000 },
       { "poste": "Salle de bain haut de gamme", "unite": "forfait", "bas": 10000, "haut": 18000 },
       { "poste": "Douche a l'italienne", "unite": "forfait", "bas": 2000, "haut": 4500 },
       { "poste": "WC (fourni pose)", "unite": "unite", "bas": 300, "haut": 700 }
