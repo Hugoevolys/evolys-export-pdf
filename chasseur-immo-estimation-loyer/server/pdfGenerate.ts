@@ -235,16 +235,20 @@ const CSS = `
 `;
 
 function footerTemplate(d: EstimationData): string {
-  const left = `${esc(d.advisor.company)} - Estimation locative - ${esc(d.footerAddress)}`;
+  const left = `Evolys - Estimation locative - ${esc(d.footerAddress)}`;
   const name = [d.advisor.advisorName, d.advisor.advisorLastName].filter(Boolean).join(' ').trim();
   const company = EVOLYS_LEGAL_LINE;
   const conseiller = name
     ? `${esc(name)}, agent commercial immobilier immatriculé au RSAC ${esc(d.advisor.rsacCity || '')} n° ${esc(d.advisor.rsac || '')} — EI — ${esc(d.advisor.proAddress || '')} — agissant au nom et pour le compte d'ARM IMMO.`
     : '';
-  return `<div style="width:100%; color:#fff; background:${NAVY}; box-sizing:border-box; font-family: Helvetica, Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
-    <div style="font-size:6px; opacity:.8; text-align:center; padding:4px 16px 0; line-height:1.35;">${company}</div>
-    ${conseiller ? `<div style="font-size:6px; opacity:.8; text-align:center; padding:1px 16px 0; line-height:1.35;">${conseiller}</div>` : ''}
-    <div style="font-size:7.5px; padding:2px 16px 5px; display:flex; justify-content:space-between;">
+  // Encadre bleu = UNIQUEMENT les mentions legales. La ligne "Evolys - Estimation
+  // locative - ... Page X - etabli le ..." passe SOUS l'encadre, en noir.
+  return `<div style="width:100%; box-sizing:border-box; font-family: Helvetica, Arial, sans-serif;">
+    <div style="background:${NAVY}; color:#fff; padding:5px 16px; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+      <div style="font-size:6px; opacity:.85; text-align:center; line-height:1.4;">${company}</div>
+      ${conseiller ? `<div style="font-size:6px; opacity:.85; text-align:center; line-height:1.4; padding-top:1px;">${conseiller}</div>` : ''}
+    </div>
+    <div style="display:flex; justify-content:space-between; color:#1b2733; font-size:7px; padding:3px 16px 0;">
       <span>${left}</span>
       <span>Page <span class="pageNumber"></span> - établi le ${esc(d.advisor.date)}</span>
     </div>
