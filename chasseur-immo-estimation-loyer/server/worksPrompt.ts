@@ -30,9 +30,6 @@ function buildReference(c: PriceConfig): string {
   const base = c.priceBase
     .map((lot) => `${lot.lot.toUpperCase()} : ` + lot.postes.map((p) => `${p.poste} ${num(p.bas)}-${num(p.haut)}/${p.unite}`).join(' ; ') + '.')
     .join('\n');
-  const standing = Object.entries(c.standingCoef)
-    .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)} x${v.toLocaleString('fr-FR')}`)
-    .join(' · ');
   const regional = c.regionalCoef
     .map((r) => `${r.zone} ${r.bas.toLocaleString('fr-FR')}${r.bas !== r.haut ? '-' + r.haut.toLocaleString('fr-FR') : ''}`)
     .join(' · ');
@@ -40,8 +37,8 @@ function buildReference(c: PriceConfig): string {
   return `# BASE DE PRIX DE REFERENCE (TTC, fourniture + pose, ${c.meta.date}, standing "Confort" = base 1,00 ; bas-haut)
 ${base}
 
-# COEFFICIENTS DE STANDING (multiplient la base Confort)
-${standing}. Le standing agit surtout sur les finitions/equipements (sols, peinture, cuisine, SDB, menuiseries), peu sur les lots techniques (elec/plomberie, davantage normes).
+# STANDING = position dans la fourchette de prix (PAS de coefficient)
+Essentiel = prix BAS de chaque poste (fourniture/pose economique, materiaux d'entree de gamme fiables). Prestige = prix HAUT (materiaux nobles, finitions premium).
 
 # COEFFICIENTS REGIONAUX (deduits du CODE POSTAL ; multiplient le sous-total APRES standing)
 ${regional}.
@@ -63,10 +60,9 @@ Tu reponds en une seule passe : tu NE POSES PAS de questions. Si une donnee dete
 ${buildReference(CFG)}
 
 # REPRODUCTIBILITE (IMPERATIF) — memes entrees => meme resultat, au centime
-- Prix_reference = MILIEU EXACT de la fourchette, soit round((bas + haut) / 2). Jamais une autre valeur.
-- Coef_standing applique UNIFORMEMENT a TOUTES les lignes (demolition, electricite, plomberie, sols, peinture, menuiseries...) SAUF les forfaits Cuisine et Salle de bain.
-- Cuisine et Salle de bain : le coef ne s'applique PAS ; a la place, la GAMME est choisie de facon DETERMINISTE selon le standing (Essentiel -> entree de gamme / standard ; Prestige -> haut de gamme). Voir decomposition.
-- Provision aleas : 12 % par defaut ; 15 % UNIQUEMENT si bati avant 1948 ou restructuration. Jamais autre chose.
+- Prix_reference selon le standing : Essentiel = prix BAS EXACT du poste ; Prestige = prix HAUT EXACT. AUCUN coefficient multiplicateur (le choix bas/haut EST le standing). Jamais une valeur intermediaire tiree au hasard.
+- Cuisine et Salle de bain : la gamme est choisie selon le standing (voir decomposition), au prix bas/haut de la gamme retenue.
+- Provision aleas : 10 % par defaut ; 15 % UNIQUEMENT si bati avant 1948 ou restructuration lourde. Jamais autre chose.
 - Notations : S = surface (m2) ; P = nb de pieces (si absent, P = max(1, round(S/25))) ; W = nb points d'eau fournis ; F = nb fenetres fournies.
 
 # DECOMPOSITION FIXE PAR POSTE (produis EXACTEMENT ces lignes et ces quantites, pas d'autres)
@@ -81,16 +77,16 @@ Pour chaque poste COCHE, genere precisement les lignes suivantes (et AUCUNE lign
 - Menuiseries interieures : Portes interieures = (P + 1) unites.
 - Revetements de sol : Ragreage = S m2 ; + Carrelage = round(S x 0,20) m2 ; + Parquet contrecolle = (S - round(S x 0,20)) m2 ; + Plinthes = round(S x 1,0) ml.
 - Peinture : Enduit/preparation = S m2 ; + Peinture murs+plafonds = S m2.
-- Cuisine : 1 ligne, gamme selon le standing (PAS de coef de standing applique) : Essentiel -> "Cuisine equipee entree de gamme" (milieu de fourchette 5000-9000 = 7000) ; Prestige -> "Cuisine equipee haut de gamme" (15000-30000 = 22500).
-- Salle de bain : 1 ligne, gamme selon le standing (PAS de coef) : Essentiel -> "Renovation complete salle de bain (~5 m2)" (5000-10000 = 7500) ; Prestige -> "Salle de bain haut de gamme" (10000-18000 = 14000) ; + WC = 1 unite (coef standing applique au WC).
+- Cuisine : 1 ligne : Essentiel -> "Cuisine equipee entree de gamme" au prix BAS (5000) ; Prestige -> "Cuisine equipee haut de gamme" au prix HAUT (30000).
+- Salle de bain : 1 ligne : Essentiel -> "Renovation complete salle de bain (~5 m2)" au prix BAS (5000) ; Prestige -> "Salle de bain haut de gamme" au prix HAUT (18000) ; + WC = 1 unite (prix bas si Essentiel, haut si Prestige).
 - Exterieur : selon surfaces decrites (toiture/facade/ITE) ; si non precise, signale-le dans hypotheses et n'inclus pas de ligne.
 Le nombre de lignes ne doit dependre QUE des postes coches et des regles ci-dessus, jamais d'une appreciation variable.
 
 # METHODE DE CALCUL
-Pour chaque poste retenu : Cout_poste = Quantite x Prix_reference x Coef_standing.
-Sous_total = somme des postes (apres standing).
+Pour chaque poste retenu : Cout_poste = Quantite x Prix_reference (prix BAS si Essentiel, prix HAUT si Prestige ; pas de coefficient).
+Sous_total = somme des postes.
 Total_travaux = Sous_total x Coef_regional (choisi dans la fourchette selon densite/acces).
-Provision pour aleas : 10 % (recent/bon etat), 12 % (standard), 15 % (bati avant 1948 / restructuration). totalProjet = Total_travaux x (1 + aleas).
+Provision pour aleas : 10 % par defaut ; 15 % uniquement si bati avant 1948 / restructuration lourde. totalProjet = Total_travaux x (1 + aleas).
 Fourchette = [ totalProjet x 0,90 ; totalProjet x 1,15 ].
 CONTROLE : recalcule cout/m2 = totalProjet / surface et verifie qu'il tombe dans la borne du type de renovation declare ; sinon, signale dans 'hypotheses' et reexamine les quantites (ne LISSE jamais le chiffre).
 
@@ -102,20 +98,20 @@ Tu ne calcules JAMAIS toi-meme la renovation energetique. Si un PDF DPE Wizard e
 REGLE ANTI-DOUBLE-COMPTAGE (impérative) : si un poste est deja chiffre par DPE Wizard (isolation murs/combles, menuiseries exterieures, chauffage, eau chaude sanitaire...), NE le re-chiffre PAS dans les 'lines' travaux generaux ; retire le doublon cote travaux, garde le montant DPE Wizard, et indique le rapprochement dans 'hypotheses'.
 Les montants energie sont "hors aides" (MaPrimeRenov', CEE, eco-PTZ) : rappelle-le dans energy.note. Si AUCUN PDF n'est joint, n'invente rien : laisse 'energy' absent et signale dans 'hypotheses' que la renovation energetique n'est pas chiffree.
 
-# SORTIE : reponds UNIQUEMENT par un objet JSON valide conforme au schema, sans texte autour ni markdown. Toutes les chaines en francais avec ORTHOGRAPHE et ACCENTS corrects. Les montants sont des NOMBRES en euros (pas de chaines, pas de symbole). Coherence obligatoire : sousTotalTravaux = somme des lines.sousTotal ; totalProjet = round(sousTotalTravaux x regionalCoef x (1 + provisionAleasPct/100)) ; totalGeneral = totalProjet + (energy.total si present, sinon 0).`;
+# SORTIE : reponds UNIQUEMENT par un objet JSON valide conforme au schema, sans texte autour ni markdown. Toutes les chaines en francais avec ORTHOGRAPHE et ACCENTS corrects. Les montants sont des NOMBRES en euros (pas de chaines, pas de symbole). Le champ 'pu' est CONCIS : uniquement le prix unitaire (ex : "40 €/m²", "500 €/point", "5 000 €/forfait") SANS commentaire ni fourchette entre parentheses. Coherence obligatoire : sousTotalTravaux = somme des lines.sousTotal ; totalProjet = round(sousTotalTravaux x regionalCoef x (1 + provisionAleasPct/100)) ; totalGeneral = totalProjet + (energy.total si present, sinon 0).`;
 
 export const WORKS_SCHEMA_HINT = `{
-  "recap": "Appartement 55 m2, 15 rue X 76000 Rouen, etat a renover, standing Confort, coef regional 0,92 (Normandie).",
-  "standing": "Confort",
+  "recap": "Appartement 55 m2, 15 rue X 76000 Rouen, etat a renover, standing Essentiel, coef regional 0,92 (Normandie).",
+  "standing": "Essentiel",
   "regionalZone": "Normandie",
   "regionalCoef": 0.92,
   "lines": [
-    { "lot": "Demolition", "poste": "Curage complet", "quantite": "55 m2", "pu": "65 EUR/m2", "sousTotal": 3575 },
-    { "lot": "Technique", "poste": "Mise aux normes electrique NF C15-100", "quantite": "55 m2", "pu": "105 EUR/m2", "sousTotal": 5775 }
-    // ... une ligne par poste retenu, regroupees par lot
+    { "lot": "Demolition", "poste": "Curage complet", "quantite": "55 m2", "pu": "40 €/m²", "sousTotal": 2200 },
+    { "lot": "Technique", "poste": "Mise aux normes electrique NF C15-100", "quantite": "55 m2", "pu": "80 €/m²", "sousTotal": 4400 }
+    // ... une ligne par poste retenu, regroupees par lot ; 'pu' concis (prix seul)
   ],
   "sousTotalTravaux": 0,             // somme des lines.sousTotal
-  "provisionAleasPct": 12,
+  "provisionAleasPct": 10,
   "totalProjet": 0,                  // round(sousTotalTravaux * regionalCoef * (1 + provisionAleasPct/100))
   "fourchetteBasse": 0,              // round(totalProjet * 0.90)
   "fourchetteHaute": 0,              // round(totalProjet * 1.15)

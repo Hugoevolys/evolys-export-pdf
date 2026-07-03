@@ -115,7 +115,7 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
                   className={clsx('flex-1 px-3 py-2 text-sm font-medium transition-colors', p.standing === v ? 'bg-navy text-white' : 'text-slate-600 hover:bg-slate-50')}>{l}</button>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Essentiel ×0,85 · Prestige ×1,40 (base de prix = niveau Confort)</p>
+            <p className="text-xs text-slate-400 mt-1">Essentiel = fourchette basse (entrée de gamme) · Prestige = fourchette haute (premium)</p>
           </div>
         </div>
       </Section>
@@ -223,7 +223,7 @@ function WorksResult({ data, onReset, onBack }: { data: WorksEstimate; onReset: 
                   <td className="p-2 text-slate-500">{l.lot}</td>
                   <td className="p-2 font-medium text-slate-700">{l.poste}</td>
                   <td className="p-2 whitespace-nowrap text-slate-500">{l.quantite}</td>
-                  <td className="p-2 whitespace-nowrap text-slate-500">{l.pu}</td>
+                  <td className="p-2 text-slate-500 break-words">{l.pu}</td>
                   <td className="p-2 text-right whitespace-nowrap">{euro(l.sousTotal)}</td>
                 </tr>
               ))}

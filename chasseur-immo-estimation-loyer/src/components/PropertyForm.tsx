@@ -15,6 +15,7 @@ const ANNEXES = ['Cave', 'Parking', 'Box', 'Garage'];
 const cap = (v: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
 
 const empty: PropertyInput = {
+  propertyKind: 'appartement',
   address: '', postalCode: '', city: '',
   surface: 0, rooms: 3, bedrooms: 2,
   furnished: true, constructionEpoch: '1991-2005',
@@ -63,6 +64,9 @@ export function PropertyForm({ onSubmit, loading }: {
 
       <Section title="Caractéristiques" icon={Building2} required>
         <div className="grid grid-cols-6 gap-3">
+          <div className="col-span-2"><label className="label">Type de bien *</label>
+            <Toggle value={p.propertyKind} onChange={(v) => setP((s) => ({ ...s, propertyKind: v as 'appartement' | 'maison', elevator: v === 'maison' ? false : s.elevator }))}
+              options={[{ v: 'appartement', label: 'Appartement' }, { v: 'maison', label: 'Maison' }]} /></div>
           <div className="col-span-2"><label className="label">Surface (m²) *</label>
             <input className="input" type="number" value={p.surface || ''} onChange={(e) => set('surface', +e.target.value)} placeholder="49" /></div>
           <div><label className="label">Pièces (T) *</label>
@@ -77,9 +81,11 @@ export function PropertyForm({ onSubmit, loading }: {
           <div className="col-span-2"><label className="label">Meublé *</label>
             <Toggle value={p.furnished ? '1' : '0'} onChange={(v) => set('furnished', v === '1')}
               options={[{ v: '1', label: 'Meublé' }, { v: '0', label: 'Non meublé' }]} /></div>
+          {p.propertyKind === 'appartement' && (
           <div className="col-span-2"><label className="label">Ascenseur</label>
             <Toggle value={p.elevator ? '1' : '0'} onChange={(v) => set('elevator', v === '1')}
               options={[{ v: '1', label: 'Oui' }, { v: '0', label: 'Non' }]} /></div>
+          )}
           <div className="col-span-2"><label className="label">Époque de construction *</label>
             <select className="input" value={p.constructionEpoch} onChange={(e) => set('constructionEpoch', e.target.value)}>{EPOCHS.map((x) => <option key={x}>{x}</option>)}</select></div>
 

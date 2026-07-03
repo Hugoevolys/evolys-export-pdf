@@ -22,6 +22,7 @@ REGLES DE COHERENCE :
 - DPE F ou G : rappeler le gel des loyers (hausse interdite). DPE A-E : non concerne.
 - Si encadre : le loyer cible recommande ne doit PAS depasser le plafond legal de l'epoque de construction.
 - Etat (neuf/bon/a rafraichir/travaux), etage/ascenseur, exterieur, exposition : positionnent dans la fourchette (bas/haut).
+- TYPE DE BIEN (maison vs appartement) : compare TOUJOURS a des biens de MEME NATURE (une maison a des maisons, un appartement a des appartements) ; les loyers et EUR/m2 different nettement. Pour une MAISON : l'absence d'ascenseur n'est JAMAIS un point negatif (un escalier interne est normal), ne le mentionne pas comme un defaut ; valorise plutot jardin, garage, nb de niveaux, absence de charges de copropriete. L'ascenseur ne concerne QUE les appartements situes en etage.
 
 CONCISION SECTION 1 (TRES IMPORTANT) : les champs 'detail' du tableau reglementaire doivent etre ULTRA COURTS : UNE seule phrase telegraphique, ~90 caracteres maximum, juste la consequence essentielle pour CE bien (le statut OUI/NON/LIBRE porte deja l'info). Ex : "Preavis locataire 1 mois ; TLV applicable." ou "Loyer fixe librement, revision IRL en cours de bail.". PAS de numeros de decret, PAS de listing d'autres villes, PAS de phrases longues. NE PRODUIS PAS de 'regulatoryNote' (laisse le champ absent). Toute la section 1 doit tenir en quelques lignes.
 
@@ -75,12 +76,15 @@ export const SCHEMA_HINT = `{
 
 export function buildUserPrompt(p: PropertyInput): string {
   const lines = [
+    `Type de bien : ${p.propertyKind === 'maison' ? 'MAISON individuelle' : 'APPARTEMENT'}`,
     `Adresse complete : ${p.address}, ${p.postalCode} ${p.city}`,
     `Surface habitable : ${p.surface} m2`,
     `Typologie : T${p.rooms} (${p.bedrooms} chambre(s))`,
     `Meuble : ${p.furnished ? 'OUI (location meublee)' : 'NON (location nue)'}`,
     `Epoque/annee de construction : ${p.constructionEpoch}`,
-    `Etage : ${p.floor} / ascenseur : ${p.elevator ? 'oui' : 'non'}`,
+    p.propertyKind === 'maison'
+      ? `Etage(s) : ${p.floor} (maison : l'ascenseur ne s'applique PAS)`
+      : `Etage : ${p.floor} / ascenseur : ${p.elevator ? 'oui' : 'non'}`,
     `DPE : ${p.dpe}`,
     p.condition ? `Etat general : ${p.condition}` : '',
     p.exterior ? `Exterieur : ${p.exterior}` : '',

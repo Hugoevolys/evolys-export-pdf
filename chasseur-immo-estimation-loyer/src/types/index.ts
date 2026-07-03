@@ -5,6 +5,7 @@
 /** Saisie minimale du conseiller (la "fiche de renseignements"). */
 export interface PropertyInput {
   // Indispensables (*)
+  propertyKind: 'appartement' | 'maison'; // type de bien (impacte le marche + ascenseur)
   address: string;            // n + voie, ex "20 Rue Bourget"
   postalCode: string;         // "69009"
   city: string;               // "Lyon"

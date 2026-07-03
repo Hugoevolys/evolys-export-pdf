@@ -81,13 +81,20 @@ export async function research(input: PropertyInput, advisor?: Partial<Advisor>)
 
 /** Ligne "Bien estime" complete et fidele a la saisie (deterministe). */
 function buildBienEstime(p: PropertyInput): string {
+  const isMaison = p.propertyKind === 'maison';
   const parts: string[] = [
+    isMaison ? 'Maison' : 'Appartement',
     `${p.address}, ${p.postalCode} ${p.city}`,
     `${p.surface} m²`,
     `T${p.rooms} (séjour + ${p.bedrooms} chambre${p.bedrooms > 1 ? 's' : ''})`,
   ];
-  if (p.floor) parts.push(`${p.floor} étage${p.elevator ? ' avec ascenseur' : ' sans ascenseur'}`);
-  else if (p.elevator) parts.push('avec ascenseur');
+  if (isMaison) {
+    if (p.floor) parts.push(p.floor); // niveaux (pas d'ascenseur pour une maison)
+  } else if (p.floor) {
+    parts.push(`${p.floor} étage${p.elevator ? ' avec ascenseur' : ' sans ascenseur'}`);
+  } else if (p.elevator) {
+    parts.push('avec ascenseur');
+  }
   parts.push(`DPE ${p.dpe}`);
   parts.push(p.furnished ? 'location meublée' : 'location nue');
   if (p.constructionEpoch) parts.push(`époque ${p.constructionEpoch}`);
