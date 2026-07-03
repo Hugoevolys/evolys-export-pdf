@@ -22,13 +22,18 @@ export default function App() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [current, setCurrent] = useState(0);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   useEffect(() => { getSettings().then(setSettings).catch(() => {}); }, []);
 
-  async function handleAddFiles(files: FileList) {
+  async function handleAddFiles(files: FileList | File[]) {
+    const pdfs = Array.from(files).filter(
+      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
+    );
+    if (!pdfs.length) return;
     setLoading(true); setError('');
     try {
       // Traite chaque document déposé et cumule les annonces extraites.
-      for (const file of Array.from(files)) {
+      for (const file of pdfs) {
         const res = await uploadPdf(file);
         setListings((prev) => [...prev, ...res.listings]);
       }
@@ -86,20 +91,26 @@ export default function App() {
             <div className="text-center mb-8">
               <h1 className="font-title text-3xl text-evolys mb-2">Créez votre sélection de biens</h1>
               <p className="text-slate-500">
-                Déposez vos annonces moteur immo : l'outil les nettoie et génère un PDF client à votre image.
+                Déposez vos annonces MoteurImmo : l'outil les nettoie et génère un PDF client à votre image.
               </p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg shadow-evolys/5 ring-1 ring-slate-100 p-8">
-              <label className={`group block rounded-2xl p-10 text-center cursor-pointer border-2 border-dashed transition-all
-                ${loading ? 'border-evolys bg-evolys-light/30' : 'border-slate-200 hover:border-evolys hover:bg-evolys-light/20'}`}>
+              <label
+                onDragOver={(e) => { e.preventDefault(); if (!loading) setDragActive(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
+                onDrop={(e) => { e.preventDefault(); setDragActive(false); if (!loading) handleAddFiles(e.dataTransfer.files); }}
+                className={`group block rounded-2xl p-10 text-center cursor-pointer border-2 border-dashed transition-all
+                ${loading || dragActive ? 'border-evolys bg-evolys-light/30' : 'border-slate-200 hover:border-evolys hover:bg-evolys-light/20'}`}>
                 <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-evolys-light flex items-center justify-center transition-transform group-hover:scale-105">
                   {loading
                     ? <Loader2 className="h-7 w-7 animate-spin text-evolys" />
                     : <Upload className="h-7 w-7 text-evolys" />}
                 </div>
-                <div className="font-title text-lg text-evolys">Déposer vos exports PDF MoteurImmo</div>
-                <div className="text-sm text-slate-500 mt-1">Fichiers PDF — un ou plusieurs à la fois</div>
+                <div className="font-title text-lg text-evolys">
+                  {dragActive ? 'Déposez vos fichiers ici' : 'Déposer vos exports PDF MoteurImmo'}
+                </div>
+                <div className="text-sm text-slate-500 mt-1">Glissez-déposez ou cliquez — un ou plusieurs PDF</div>
                 <div className="text-xs text-slate-400 mt-3 max-w-sm mx-auto leading-relaxed">
                   {loading
                     ? 'Extraction en cours… (≈ 30 s par document)'
@@ -160,7 +171,7 @@ export default function App() {
                 className="mt-6 w-full px-4 py-3.5 rounded-xl bg-evolys text-white font-medium shadow-sm
                   hover:bg-evolys-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed
                   flex items-center justify-center gap-2">
-                J'ai fini de déposer mes annonces moteur immo
+                J'ai fini de déposer mes annonces MoteurImmo
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>

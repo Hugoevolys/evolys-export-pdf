@@ -71,6 +71,8 @@ export async function extractListing(raw: RawListing): Promise<Listing> {
     isNewBuild: Boolean(data.isNewBuild),
     mandateType: 'simple',
     notaryRate: data.isNewBuild ? 3 : 8.5,
+    // Montant € pré-rempli = prix net × taux (le conseiller peut l'ajuster).
+    notaryOverride: Math.round(((data.netSellerPrice ?? 0) * (data.isNewBuild ? 3 : 8.5)) / 100),
     advisorComment: '',
     photos: [], // chemins remplis depuis l'extraction PDF
   };

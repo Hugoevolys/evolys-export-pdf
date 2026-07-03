@@ -37,7 +37,11 @@ export function ListingEditor({
           <span className="text-slate-600">Prix net vendeur (€)</span>
           <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
             value={listing.netSellerPrice}
-            onChange={(e) => set({ netSellerPrice: Number(e.target.value) })} />
+            onChange={(e) => {
+              const price = Number(e.target.value);
+              // Recalcule le montant € des frais de notaire quand le prix change.
+              set({ netSellerPrice: price, notaryOverride: Math.round((price * listing.notaryRate) / 100) });
+            }} />
         </label>
         <label className="text-sm">
           <span className="text-slate-600">Type de mandat</span>
@@ -54,18 +58,19 @@ export function ListingEditor({
             value={listing.isNewBuild ? 'neuf' : 'ancien'}
             onChange={(e) => {
               const neuf = e.target.value === 'neuf';
-              // Bascule le type ET applique le taux de notaire par défaut correspondant.
-              set({ isNewBuild: neuf, notaryRate: neuf ? settings.notaryRateNew : settings.notaryRate });
+              const rate = neuf ? settings.notaryRateNew : settings.notaryRate;
+              // Applique le taux par défaut ET recalcule le montant € des frais de notaire.
+              set({ isNewBuild: neuf, notaryRate: rate, notaryOverride: Math.round((listing.netSellerPrice * rate) / 100) });
             }}>
             <option value="ancien">Ancien — {settings.notaryRate}% de notaire</option>
             <option value="neuf">Neuf — {settings.notaryRateNew}% de notaire</option>
           </select>
         </label>
         <label className="text-sm">
-          <span className="text-slate-600">Frais de notaire (%)</span>
-          <input type="number" step="0.1" className="mt-1 w-full border rounded-lg px-3 py-2"
-            value={listing.notaryRate}
-            onChange={(e) => set({ notaryRate: Number(e.target.value) })} />
+          <span className="text-slate-600">Frais de notaire (€)</span>
+          <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.notaryOverride ?? ''}
+            onChange={(e) => set({ notaryOverride: e.target.value === '' ? undefined : Number(e.target.value) })} />
           <a href="https://www.anil.org/outils/outils-de-calcul/frais-dacquisition-dits-frais-de-notaire/"
             target="_blank" rel="noopener noreferrer"
             className="text-xs text-evolys underline hover:text-evolys-dark">

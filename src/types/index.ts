@@ -31,7 +31,8 @@ export interface Listing {
   netSellerPrice: number;
   mandateType: MandateType;
   commissionOverride?: number; // force le montant € si renseigné
-  notaryRate: number;          // % frais de notaire
+  notaryRate: number;          // % frais de notaire (défaut selon neuf/ancien)
+  notaryOverride?: number;     // montant € des frais de notaire (saisi/auto en €)
   isNewBuild: boolean;         // neuf (3%) vs ancien (8,5%)
 
   advisorComment: string;

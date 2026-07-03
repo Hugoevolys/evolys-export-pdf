@@ -9,7 +9,7 @@ export function computeCommission(l: Listing, s: Settings): number {
 export function computeGlobalCost(l: Listing, s: Settings): CostBreakdown {
   const commission = computeCommission(l, s);
   const base = s.notaryBase === 'net_plus_commission' ? l.netSellerPrice + commission : l.netSellerPrice;
-  const notary = (base * l.notaryRate) / 100;
+  const notary = l.notaryOverride != null ? l.notaryOverride : (base * l.notaryRate) / 100;
   return {
     netSellerPrice: l.netSellerPrice,
     commission,
