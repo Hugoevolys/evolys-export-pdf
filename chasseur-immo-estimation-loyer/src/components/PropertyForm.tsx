@@ -48,7 +48,7 @@ export function PropertyForm({ onSubmit, loading }: {
     <div className="card space-y-6">
       <div>
         <h2 className="font-title text-2xl text-navy">Fiche du bien</h2>
-        <p className="text-sm text-slate-500 mt-1">Les champs marqués <span className="text-navy font-semibold">*</span> sont indispensables. Claude vérifie ensuite la zone tendue, l'encadrement et les loyers de marché.</p>
+        <p className="text-sm text-slate-500 mt-1">Les champs marqués <span className="text-navy font-semibold">*</span> sont indispensables. Notre outil vérifie ensuite la zone tendue, l'encadrement et les loyers de marché.</p>
       </div>
 
       <Section title="Localisation" icon={MapPin} required>
