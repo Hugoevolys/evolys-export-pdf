@@ -1,6 +1,7 @@
 import type { Listing, Settings, MandateType } from '@/types';
 import { computeGlobalCost, computeCommission, euro } from '@/lib/cost';
 import { fileUrl } from '@/lib/api';
+import { X } from 'lucide-react';
 
 export function ListingEditor({
   listing, index, total, settings, onChange,
@@ -22,13 +23,28 @@ export function ListingEditor({
       <h2 className="text-lg font-semibold">{listing.title}</h2>
       <div className="text-sm text-slate-500 mb-4">{listing.city} {listing.postalCode}</div>
 
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-slate-600">
+          Photos <span className="text-slate-400">({listing.photos.length})</span>
+        </span>
+        <span className="text-xs text-slate-400">Survolez une photo et cliquez sur ✕ pour la retirer</span>
+      </div>
       <div className="grid grid-cols-4 gap-2 mb-4">
         {listing.photos.map((p, i) => (
-          <img key={i} src={fileUrl(p)}
-               className="h-20 w-full object-cover rounded" />
+          <div key={i} className="relative group">
+            <img src={fileUrl(p)} className="h-20 w-full object-cover rounded" />
+            <button
+              type="button"
+              onClick={() => set({ photos: listing.photos.filter((_, idx) => idx !== i) })}
+              title="Retirer cette photo"
+              className="absolute top-1 right-1 h-5 w-5 flex items-center justify-center rounded-full
+                bg-black/55 text-white opacity-70 group-hover:opacity-100 hover:bg-red-600 transition">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         ))}
         {listing.photos.length === 0 && (
-          <div className="col-span-4 text-xs text-slate-400 italic">Photos source affichées ici (non modifiées).</div>
+          <div className="col-span-4 text-xs text-slate-400 italic">Aucune photo — cette annonce n'aura pas de photos dans le PDF.</div>
         )}
       </div>
 
