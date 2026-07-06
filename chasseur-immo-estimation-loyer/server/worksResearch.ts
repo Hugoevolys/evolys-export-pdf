@@ -1,6 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { WorksInput, WorksEstimate } from '../src/types/index.ts';
-import { WORKS_SYSTEM, buildWorksPrompt } from './worksPrompt.ts';
+import { WORKS_SYSTEM, buildWorksPrompt, COEF_PACK } from './worksPrompt.ts';
+
+/** Multiplie le 1er nombre d'une chaine 'pu' par un coefficient (ex "3 500 €/forfait" x1,3 -> "4 550 €/forfait"). */
+function scalePu(pu: string, c: number): string {
+  return pu.replace(/\d[\d\s  ]*\d|\d/, (m) => {
+    const n = parseInt(m.replace(/[\s  ]/g, ''), 10);
+    return isNaN(n) ? m : Math.round(n * c).toLocaleString('fr-FR');
+  });
+}
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
@@ -47,6 +55,16 @@ export async function worksResearch(input: WorksInput): Promise<WorksEstimate> {
   });
 
   const data = parseJson(collectText(msg.content)) as WorksEstimate;
+
+  // Le modele chiffre en base ESSENTIEL : on applique ICI le coef de pack (exact) sur
+  // chaque ligne travaux (jamais sur le bloc energie). Confort = x1,30, Prestige = x1,60.
+  const packCoef = COEF_PACK[input.standing] ?? 1;
+  if (packCoef !== 1 && Array.isArray(data.lines)) {
+    for (const l of data.lines) {
+      l.sousTotal = Math.round((Number(l.sousTotal) || 0) * packCoef);
+      if (l.pu) l.pu = scalePu(l.pu, packCoef);
+    }
+  }
 
   // Filet de securite : recale les totaux si l'IA derive (somme des lignes fait foi).
   const sum = Array.isArray(data.lines)

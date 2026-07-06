@@ -11,7 +11,7 @@ const KINDS = [['appartement', 'Appartement'], ['maison', 'Maison'], ['immeuble'
 const EPOCHS = ['avant 1948', '1948-1974', 'apres 1974'] as const;
 const CONDITIONS = ['à rafraîchir', 'à rénover', 'à restructurer'] as const;
 const RENOS = ['rafraîchissement', 'partielle', 'complète', 'lourde'] as const;
-const STANDINGS = [['essentiel', 'Essentiel'], ['prestige', 'Prestige']] as const;
+const STANDINGS = [['essentiel', 'Essentiel'], ['confort', 'Confort'], ['prestige', 'Prestige']] as const;
 const POSTES = [
   'Démolition / dépose', 'Création de cloisons', 'Plâtrerie & isolation', 'Électricité', 'Plomberie',
   'Chauffage', 'Menuiseries extérieures', 'Menuiseries intérieures', 'Revêtements de sol', 'Peinture',
@@ -21,7 +21,7 @@ const POSTES = [
 const empty: WorksInput = {
   address: '', postalCode: '', city: '', floor: '', elevator: false, access: '',
   propertyKind: 'appartement', surface: 0, rooms: undefined, epoch: '', ceilingHeight: '',
-  condition: 'à rénover', renoType: 'complète', standing: 'essentiel',
+  condition: 'à rénover', renoType: 'complète', standing: 'confort',
   postes: [], waterPoints: undefined, windows: undefined, notes: '',
 };
 
@@ -115,7 +115,7 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
                   className={clsx('flex-1 px-3 py-2 text-sm font-medium transition-colors', p.standing === v ? 'bg-navy text-white' : 'text-slate-600 hover:bg-slate-50')}>{l}</button>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Essentiel = fourchette basse (entrée de gamme) · Prestige = fourchette haute (premium)</p>
+            <p className="text-xs text-slate-400 mt-1">Essentiel = base (coûts minimisés) · Confort ×1,30 (rénovation classique) · Prestige ×1,60 (premium)</p>
           </div>
         </div>
       </Section>

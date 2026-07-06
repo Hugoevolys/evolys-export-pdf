@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "description": "Forfaits pack Essentiel (entree de gamme) pour cuisine / salle de bain / WC / depose. Prix TTC national 2025-2026 (coef regional = 1,00). A multiplier par coef regional puis coef de pack. Non lineaire : paliers par bande de surface habitable totale du bien. Editez ce fichier pour ajuster les prix sans toucher au code.",
+    "coef_pack": { "essentiel": 1.0, "confort": 1.3, "prestige": 1.6 }
+  },
+  "cuisine": {
+    "libelle": "Cuisine equipee entree de gamme (fournie posee)",
+    "appartement": [
+      { "surface_min": 0,   "surface_max": 25,  "forfait": 2000 },
+      { "surface_min": 25,  "surface_max": 45,  "forfait": 2800 },
+      { "surface_min": 45,  "surface_max": 65,  "forfait": 3500 },
+      { "surface_min": 65,  "surface_max": 90,  "forfait": 4000 },
+      { "surface_min": 90,  "surface_max": 120, "forfait": 4500 },
+      { "surface_min": 120, "surface_max": 9999,"forfait": 5000 }
+    ],
+    "maison": [
+      { "surface_min": 0,   "surface_max": 70,  "forfait": 3500 },
+      { "surface_min": 70,  "surface_max": 100, "forfait": 4200 },
+      { "surface_min": 100, "surface_max": 140, "forfait": 5000 },
+      { "surface_min": 140, "surface_max": 180, "forfait": 5800 },
+      { "surface_min": 180, "surface_max": 250, "forfait": 6500 },
+      { "surface_min": 250, "surface_max": 9999,"forfait": 7500 }
+    ]
+  },
+  "salle_de_bain": {
+    "libelle": "Renovation complete salle de bain entree de gamme (douche, meuble vasque, carrelage, par SDB)",
+    "appartement": [
+      { "surface_min": 0,   "surface_max": 25,  "forfait": 2800, "nb_typique": 1 },
+      { "surface_min": 25,  "surface_max": 45,  "forfait": 3200, "nb_typique": 1 },
+      { "surface_min": 45,  "surface_max": 65,  "forfait": 3600, "nb_typique": 1 },
+      { "surface_min": 65,  "surface_max": 90,  "forfait": 4000, "nb_typique": 2 },
+      { "surface_min": 90,  "surface_max": 120, "forfait": 4400, "nb_typique": 2 },
+      { "surface_min": 120, "surface_max": 9999,"forfait": 4800, "nb_typique": 3 }
+    ],
+    "maison": [
+      { "surface_min": 0,   "surface_max": 70,  "forfait": 3500, "nb_typique": 1 },
+      { "surface_min": 70,  "surface_max": 100, "forfait": 3900, "nb_typique": 1 },
+      { "surface_min": 100, "surface_max": 140, "forfait": 4300, "nb_typique": 2 },
+      { "surface_min": 140, "surface_max": 180, "forfait": 4700, "nb_typique": 2 },
+      { "surface_min": 180, "surface_max": 250, "forfait": 5200, "nb_typique": 3 },
+      { "surface_min": 250, "surface_max": 9999,"forfait": 5800, "nb_typique": 3 }
+    ]
+  },
+  "wc": {
+    "libelle": "WC entree de gamme (cuvette fournie posee)",
+    "forfait_unitaire": 300,
+    "appartement": [
+      { "surface_min": 0,   "surface_max": 65,  "nb_typique": 1 },
+      { "surface_min": 65,  "surface_max": 120, "nb_typique": 1 },
+      { "surface_min": 120, "surface_max": 9999,"nb_typique": 2 }
+    ],
+    "maison": [
+      { "surface_min": 0,   "surface_max": 100, "nb_typique": 1 },
+      { "surface_min": 100, "surface_max": 180, "nb_typique": 2 },
+      { "surface_min": 180, "surface_max": 9999,"nb_typique": 3 }
+    ]
+  },
+  "depose": {
+    "libelle": "Depose cuisine ou salle de bain (evacuation comprise, par unite deposee). Meme grille appart/maison.",
+    "bandes": [
+      { "surface_min": 0,   "surface_max": 50,  "forfait": 350 },
+      { "surface_min": 50,  "surface_max": 100, "forfait": 450 },
+      { "surface_min": 100, "surface_max": 180, "forfait": 550 },
+      { "surface_min": 180, "surface_max": 9999,"forfait": 650 }
+    ]
+  },
+  "modificateur_etage": {
+    "libelle": "Majoration manutention des deposes selon l'etage (appartement sans ascenseur). Maison / RDC / avec ascenseur = 1,00.",
+    "regles": [
+      { "condition": "RDC, avec ascenseur, ou maison", "coefficient": 1.0 },
+      { "condition": "appartement sans ascenseur, etage 1-2", "coefficient": 1.1 },
+      { "condition": "appartement sans ascenseur, etage 3-4", "coefficient": 1.2 },
+      { "condition": "appartement sans ascenseur, etage 5 et +", "coefficient": 1.3 }
+    ]
+  }
+}
