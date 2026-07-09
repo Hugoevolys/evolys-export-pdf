@@ -56,8 +56,8 @@ export async function worksResearch(input: WorksInput): Promise<WorksEstimate> {
 
   const data = parseJson(collectText(msg.content)) as WorksEstimate;
 
-  // Le modele chiffre en base ESSENTIEL : on applique ICI le coef de pack (exact) sur
-  // chaque ligne travaux (jamais sur le bloc energie). Confort = x1,30, Prestige = x1,60.
+  // Le modele chiffre en base ÉCONOMIQUE : on applique ICI le coef de pack (exact) sur
+  // chaque ligne travaux (jamais sur le bloc energie). Classique = x1,30, Prestige = x2,60.
   const packCoef = COEF_PACK[input.standing] ?? 1;
   if (packCoef !== 1 && Array.isArray(data.lines)) {
     for (const l of data.lines) {

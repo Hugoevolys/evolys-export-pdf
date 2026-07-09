@@ -4,10 +4,10 @@ import type { WorksInput } from '../src/types/index.ts';
 /**
  * Outil "Estimation des couts de travaux".
  * - worksPriceBase.json : base de prix par poste (electricite, plomberie, sols...).
- * - worksForfaits.json  : forfaits Essentiel cuisine / SDB / WC / depose (par type + bande de surface).
+ * - worksForfaits.json  : forfaits Économique cuisine / SDB / WC / depose (par type + bande de surface).
  * Les deux fichiers sont editables sans toucher au code. Calcul deterministe (pas de recherche web).
- * 3 packs : le moteur calcule TOUJOURS en base Essentiel puis applique le coef de pack
- * (Essentiel x1,00 · Confort x1,30 · Prestige x1,60).
+ * 3 packs : le moteur calcule TOUJOURS en base Économique puis applique le coef de pack
+ * (Économique x1,00 · Classique x1,30 · Prestige x2,60).
  */
 
 interface PriceRow { poste: string; unite: string; bas: number; haut: number }
@@ -32,7 +32,7 @@ interface ForfaitsConfig {
 
 const CFG: PriceConfig = JSON.parse(readFileSync(new URL('./worksPriceBase.json', import.meta.url), 'utf8'));
 const FORF: ForfaitsConfig = JSON.parse(readFileSync(new URL('./worksForfaits.json', import.meta.url), 'utf8'));
-export const COEF_PACK = FORF.meta.coef_pack; // { essentiel:1, confort:1.3, prestige:1.6 }
+export const COEF_PACK = FORF.meta.coef_pack; // { economique:1, classique:1.3, prestige:2.6 }
 
 const num = (n: number) => n.toLocaleString('fr-FR');
 const bandRange = (b: Band) => (b.surface_max >= 9999 ? `>${b.surface_min}` : `${b.surface_min}-${b.surface_max}`);
@@ -47,10 +47,10 @@ function buildReference(c: PriceConfig, f: ForfaitsConfig): string {
     .map((r) => `${r.zone} ${r.bas.toLocaleString('fr-FR')}${r.bas !== r.haut ? '-' + r.haut.toLocaleString('fr-FR') : ''}`)
     .join(' · ');
   const wcNb = (rows: Band[]) => rows.map((b) => `${bandRange(b)}m2 ${b.nb_typique}`).join(' · ');
-  return `# BASE DE PRIX (autres postes : demolition, elec, plomberie, chauffage, menuiseries, sols, peinture, exterieur) — TTC ${c.meta.date}, valeurs Essentiel = prix BAS ; bas-haut donne a titre indicatif
+  return `# BASE DE PRIX (autres postes : demolition, elec, plomberie, chauffage, menuiseries, sols, peinture, exterieur) — TTC ${c.meta.date}, valeurs Économique = prix BAS ; bas-haut donne a titre indicatif
 ${base}
 
-# FORFAITS ESSENTIEL par TYPE de bien et BANDE de surface habitable totale (EUR national). A utiliser EXCLUSIVEMENT pour cuisine / salle de bain / WC / depose (jamais la base ci-dessus pour ces 4 postes).
+# FORFAITS ÉCONOMIQUE par TYPE de bien et BANDE de surface habitable totale (EUR national). A utiliser EXCLUSIVEMENT pour cuisine / salle de bain / WC / depose (jamais la base ci-dessus pour ces 4 postes).
 CUISINE equipee entree de gamme (fournie posee) :
   Appartement : ${bandsStr(f.cuisine.appartement)}.
   Maison : ${bandsStr(f.cuisine.maison)}.
@@ -80,16 +80,16 @@ Une seule passe, pas de questions. Si une donnee manque, prends une hypothese pr
 
 ${buildReference(CFG, FORF)}
 
-# STANDING : chiffre TOUJOURS en base ESSENTIEL (n'applique PAS le coef de pack)
-Toutes tes valeurs ('pu' et 'sousTotal') sont en base ESSENTIEL, comme si le pack etait Essentiel. Le SYSTEME appliquera ensuite le coefficient de pack (Confort x1,30 ou Prestige x1,60) apres ta reponse : tu ne l'appliques donc JAMAIS toi-meme. Indique simplement le pack demande dans 'recap' et 'standing'.
+# STANDING : chiffre TOUJOURS en base ÉCONOMIQUE (n'applique PAS le coef de pack)
+Toutes tes valeurs ('pu' et 'sousTotal') sont en base ÉCONOMIQUE, comme si le pack etait Économique. Le SYSTEME appliquera ensuite le coefficient de pack (Classique x1,30 ou Prestige x2,60) apres ta reponse : tu ne l'appliques donc JAMAIS toi-meme. Indique simplement le pack demande dans 'recap' et 'standing'.
 
 # REPRODUCTIBILITE (IMPERATIF) — memes entrees => meme resultat
-- Valeur_Essentiel EXACTE : forfait de la grille (cuisine/SDB/WC/depose) selon TYPE + bande de surface ; prix BAS de la base pour les autres postes. Jamais une valeur intermediaire au hasard.
+- Valeur_Économique EXACTE : forfait de la grille (cuisine/SDB/WC/depose) selon TYPE + bande de surface ; prix BAS de la base pour les autres postes. Jamais une valeur intermediaire au hasard.
 - Modificateur d'etage : applique au forfait de depose (cuisine ET salle de bain, de facon IDENTIQUE), selon l'etage + ascenseur (RDC/ascenseur/maison = x1,00 ; appart sans ascenseur : 1-2 x1,10, 3-4 x1,20, 5+ x1,30). Le meme modificateur s'applique aux DEUX deposes.
 - Provision aleas : 10 % par defaut ; 15 % uniquement si bati avant 1948 / restructuration lourde.
 - Notations : S = surface (m2) ; P = nb de pieces (si absent, P = max(1, round(S/25))) ; W = nb points d'eau fournis ; F = nb fenetres fournies.
 
-# DECOMPOSITION FIXE PAR POSTE COCHE (genere EXACTEMENT ces lignes, valeurs en base Essentiel ; le coef_pack sera applique a chaque ligne)
+# DECOMPOSITION FIXE PAR POSTE COCHE (genere EXACTEMENT ces lignes, valeurs en base Économique ; le coef_pack sera applique a chaque ligne)
 - Cuisine : (a) Depose cuisine = forfait depose[bande S] x modif_etage ; (b) Cuisine equipee entree de gamme = forfait cuisine[type][bande S].
 - Salle de bain : (a) Depose salle de bain = forfait depose[bande S] x modif_etage ; (b) Renovation complete SDB = forfait SDB[type][bande S] x nb_SDB (nb typique de la bande, sauf indication) ; (c) WC = ${FORF.wc.forfait_unitaire} x nb_WC (nb typique de la bande).
 - Demolition / depose (poste coche a part) : Curage complet = prix bas curage x S ; + Evacuation gravats = prix bas x max(1, round(S/30)) benne(s). (les deposes cuisine/SDB sont deja generees par les postes Cuisine/Salle de bain ci-dessus, ne pas les redoubler.)
@@ -105,10 +105,10 @@ Toutes tes valeurs ('pu' et 'sousTotal') sont en base ESSENTIEL, comme si le pac
 - Exterieur : selon surfaces decrites (toiture/facade/ITE) ; si non precise, signale-le dans hypotheses et n'inclus pas de ligne.
 Le nombre de lignes ne depend QUE des postes coches et de ces regles.
 
-# METHODE DE CALCUL (en base ESSENTIEL — le systeme ajoutera le coef de pack ensuite)
-Pour chaque ligne : Valeur_ligne = Valeur_Essentiel (et, pour les deposes, x Modif_etage). 'pu' et 'sousTotal' sont en ESSENTIEL.
+# METHODE DE CALCUL (en base ÉCONOMIQUE — le systeme ajoutera le coef de pack ensuite)
+Pour chaque ligne : Valeur_ligne = Valeur_Économique (et, pour les deposes, x Modif_etage). 'pu' et 'sousTotal' sont en ÉCONOMIQUE.
 Sous_total = somme des lignes. Total_travaux = Sous_total x Coef_regional.
-totalProjet = round(Total_travaux x (1 + aleas)). Fourchette = [ round(totalProjet x 0,90) ; round(totalProjet x 1,15) ]. coutM2 = round(totalProjet / S). (Ces totaux Essentiel seront eux aussi remultiplies par le systeme.)
+totalProjet = round(Total_travaux x (1 + aleas)). Fourchette = [ round(totalProjet x 0,90) ; round(totalProjet x 1,15) ]. coutM2 = round(totalProjet / S). (Ces totaux Économique seront eux aussi remultiplies par le systeme.)
 
 # EXCLUSIONS (a rappeler dans hypotheses)
 Mobilier, electromenager hors cuisine equipee, honoraires de maitrise d'oeuvre, frais de copro, diagnostics, desamiantage.
@@ -119,14 +119,14 @@ Tu ne calcules JAMAIS la renovation energetique. Si un PDF DPE Wizard est JOINT 
 # SORTIE : UNIQUEMENT un objet JSON valide conforme au schema, sans texte autour ni markdown. Francais avec accents. Montants = NOMBRES en euros (sans symbole). 'pu' = STRICTEMENT le prix unitaire final (ex : "3 500 €/forfait", "540 €/forfait", "80 €/m²") : pour une depose, integre deja le modificateur d'etage DANS le nombre ; AUCUNE parenthese, AUCUNE mention de bande / etage / coefficient / calcul. Coherence : sousTotalTravaux = somme des lines.sousTotal ; totalProjet = round(sousTotalTravaux x regionalCoef x (1 + provisionAleasPct/100)) ; totalGeneral = totalProjet + (energy.total si present, sinon 0).`;
 
 export const WORKS_SCHEMA_HINT = `{
-  "recap": "Appartement 60 m2, 15 rue X 76000 Rouen, etat a renover, pack Confort (x1,30), coef regional 0,92 (Normandie).",
-  "standing": "Confort",
+  "recap": "Appartement 60 m2, 15 rue X 76000 Rouen, etat a renover, pack Classique (x1,30), coef regional 0,92 (Normandie).",
+  "standing": "Classique",
   "regionalZone": "Normandie",
   "regionalCoef": 0.92,
   "lines": [
     { "lot": "Demolition", "poste": "Depose cuisine (evacuation comprise)", "quantite": "1 forfait", "pu": "540 €/forfait", "sousTotal": 540 },
     { "lot": "Equipements", "poste": "Cuisine equipee entree de gamme", "quantite": "1 forfait", "pu": "3 500 €/forfait", "sousTotal": 3500 }
-    // pu et sousTotal en base ESSENTIEL (depose = forfait bande x modif_etage ; cuisine appart 45-65m2 = 3500). Le systeme applique ensuite le coef de pack.
+    // pu et sousTotal en base ÉCONOMIQUE (depose = forfait bande x modif_etage ; cuisine appart 45-65m2 = 3500). Le systeme applique ensuite le coef de pack.
   ],
   "sousTotalTravaux": 0,
   "provisionAleasPct": 10,
@@ -165,7 +165,7 @@ export function buildWorksPrompt(p: WorksInput): string {
     p.ceilingHeight ? `Hauteur sous plafond : ${p.ceilingHeight}` : '',
     `Etat general : ${p.condition}`,
     `Type de renovation visee : ${p.renoType}`,
-    `Pack demande : ${p.standing} (mentionne-le dans recap/standing, mais CHIFFRE EN BASE ESSENTIEL ; le systeme appliquera ensuite le coef ${coef})`,
+    `Pack demande : ${p.standing} (mentionne-le dans recap/standing, mais CHIFFRE EN BASE ÉCONOMIQUE ; le systeme appliquera ensuite le coef ${coef})`,
     `Postes de travaux a chiffrer : ${p.postes?.length ? p.postes.join(', ') : '(deduire de l etat et de la description)'}`,
     p.waterPoints ? `Nb de points d'eau (plomberie) : ${p.waterPoints}` : '',
     p.windows ? `Nb de menuiseries exterieures : ${p.windows}` : '',
@@ -180,7 +180,7 @@ export function buildWorksPrompt(p: WorksInput): string {
 
 ${lines.map((l) => '- ' + l).join('\n')}
 
-Applique la METHODE : chaque ligne = valeur ESSENTIEL (forfait grille pour cuisine/SDB/WC/depose, prix bas pour les autres), deposes x modif_etage ; regroupe par lot ; applique le coef regional du code postal ${p.postalCode} ; ajoute la provision aleas ; donne le total, la fourchette et le cout au m2 EN ESSENTIEL (le systeme appliquera le coef de pack ${coef}). Liste hypotheses et exclusions.
+Applique la METHODE : chaque ligne = valeur ÉCONOMIQUE (forfait grille pour cuisine/SDB/WC/depose, prix bas pour les autres), deposes x modif_etage ; regroupe par lot ; applique le coef regional du code postal ${p.postalCode} ; ajoute la provision aleas ; donne le total, la fourchette et le cout au m2 EN ÉCONOMIQUE (le systeme appliquera le coef de pack ${coef}). Liste hypotheses et exclusions.
 
 Reponds UNIQUEMENT avec le JSON conforme a ce schema :
 ${WORKS_SCHEMA_HINT}`;

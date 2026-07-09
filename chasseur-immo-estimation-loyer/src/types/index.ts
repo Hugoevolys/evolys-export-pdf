@@ -144,7 +144,7 @@ export interface WorksInput {
   // Ampleur & standing
   condition: string;                  // a rafraichir / a renover / a restructurer (requis)
   renoType: string;                   // rafraichissement / partielle / complete / lourde (requis)
-  standing: 'essentiel' | 'confort' | 'prestige'; // requis
+  standing: 'economique' | 'classique' | 'prestige'; // requis
   // Postes (cle = poste coche) + quantites clefs facultatives
   postes: string[];
   waterPoints?: number;               // nb points d'eau (plomberie)

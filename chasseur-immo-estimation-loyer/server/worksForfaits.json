@@ -1,7 +1,7 @@
 {
   "meta": {
-    "description": "Forfaits pack Essentiel (entree de gamme) pour cuisine / salle de bain / WC / depose. Prix TTC national 2025-2026 (coef regional = 1,00). A multiplier par coef regional puis coef de pack. Non lineaire : paliers par bande de surface habitable totale du bien. Editez ce fichier pour ajuster les prix sans toucher au code.",
-    "coef_pack": { "essentiel": 1.0, "confort": 1.3, "prestige": 1.6 }
+    "description": "Forfaits pack Economique (entree de gamme) pour cuisine / salle de bain / WC / depose. Prix TTC national 2025-2026 (coef regional = 1,00). A multiplier par coef regional puis coef de pack. Non lineaire : paliers par bande de surface habitable totale du bien. Editez ce fichier pour ajuster les prix sans toucher au code.",
+    "coef_pack": { "economique": 1.0, "classique": 1.3, "prestige": 2.6 }
   },
   "cuisine": {
     "libelle": "Cuisine equipee entree de gamme (fournie posee)",
@@ -28,9 +28,9 @@
       { "surface_min": 0,   "surface_max": 25,  "forfait": 2800, "nb_typique": 1 },
       { "surface_min": 25,  "surface_max": 45,  "forfait": 3200, "nb_typique": 1 },
       { "surface_min": 45,  "surface_max": 65,  "forfait": 3600, "nb_typique": 1 },
-      { "surface_min": 65,  "surface_max": 90,  "forfait": 4000, "nb_typique": 2 },
+      { "surface_min": 65,  "surface_max": 90,  "forfait": 4000, "nb_typique": 1 },
       { "surface_min": 90,  "surface_max": 120, "forfait": 4400, "nb_typique": 2 },
-      { "surface_min": 120, "surface_max": 9999,"forfait": 4800, "nb_typique": 3 }
+      { "surface_min": 120, "surface_max": 9999,"forfait": 4800, "nb_typique": 2 }
     ],
     "maison": [
       { "surface_min": 0,   "surface_max": 70,  "forfait": 3500, "nb_typique": 1 },

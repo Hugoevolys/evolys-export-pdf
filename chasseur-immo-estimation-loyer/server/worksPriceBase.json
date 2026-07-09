@@ -2,9 +2,9 @@
   "meta": {
     "version": "1.0",
     "date": "2025-2026",
-    "note": "Prix TTC, fourniture + pose, moyennes nationales, standing Confort = base 1,00. Editez ce fichier pour mettre a jour les prix sans toucher au code."
+    "note": "Prix TTC, fourniture + pose, moyennes nationales. MODELE BASE ECONOMIQUE : les valeurs 'bas' de priceBase = pack Economique ; le moteur applique ensuite le coef de pack (Classique x1,30 · Prestige x2,60). Editez ce fichier pour mettre a jour les prix sans toucher au code."
   },
-  "standingCoef": { "essentiel": 0.85, "confort": 1.0, "prestige": 1.4 },
+  "standingCoef": { "economique": 1.0, "classique": 1.3, "prestige": 2.6 },
   "coherenceM2": [
     { "type": "Rafraichissement", "bas": 150, "haut": 400 },
     { "type": "Renovation partielle", "bas": 400, "haut": 900 },
