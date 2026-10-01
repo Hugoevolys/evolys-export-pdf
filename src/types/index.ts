@@ -38,6 +38,8 @@ export interface Listing {
   advisorComment: string;
   /** Chemins des photos source (insérées telles quelles, non modifiées). */
   photos: string[];
+  /** Découpage incertain (non bloquant) : le conseiller vérifie les photos. */
+  splitWarning?: string;
 }
 
 export interface MandateRate {

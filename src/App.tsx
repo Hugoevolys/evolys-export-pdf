@@ -151,6 +151,9 @@ export default function App() {
                           <span className="font-medium text-slate-700">{l.title}</span>
                           <span className="text-slate-400"> — {l.city} {l.postalCode}</span>
                           <span className="text-slate-400"> · {l.photos.length} photo{l.photos.length > 1 ? 's' : ''}</span>
+                          {l.splitWarning && (
+                            <span className="block text-xs text-amber-600">⚠ {l.splitWarning}</span>
+                          )}
                           {listingProblems(l).length > 0 && (
                             <span className="block text-xs text-red-600">⚠ {listingProblems(l).join(' ; ')}</span>
                           )}

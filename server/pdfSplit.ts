@@ -11,6 +11,8 @@ export interface RawListing {
   textPageIndex: number;
   text: string;
   photoPages: RawPhotoPage[];
+  /** Posé quand en-tête MoteurImmo et gros titre ne s'accordent pas sur le découpage. */
+  splitWarning?: string;
 }
 
 /**

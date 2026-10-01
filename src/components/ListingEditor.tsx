@@ -22,6 +22,9 @@ export function ListingEditor({
       <div className="text-xs text-slate-400 mb-1">Annonce {index} / {total}</div>
       <h2 className="text-lg font-semibold">{listing.title}</h2>
       <div className="text-sm text-slate-500 mb-4">{listing.city} {listing.postalCode}</div>
+      {listing.splitWarning && (
+        <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">⚠ {listing.splitWarning}</div>
+      )}
 
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-slate-600">
