@@ -9,13 +9,15 @@ import { splitPdf } from './pdfSplit.ts';
 import { extractListing } from './extract.ts';
 import { generatePdf } from './pdfGenerate.ts';
 import { getSettings, setSettings } from './settings.ts';
+import { listingProblems } from '../src/lib/validate.ts';
+import type { Listing } from '../src/types/index.ts';
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'notary-euros'; // marqueur de version (vérif déploiement)
+const BUILD = 'photos-dedup-garde-fou'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');
@@ -48,6 +50,15 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
 app.post('/api/generate', async (req, res) => {
   try {
     const { generalInfo, listings } = req.body;
+    // Garde-fou : jamais d'annonce illisible ou à 0 € dans un PDF client.
+    const blocking = (listings as Listing[])
+      .map((l, i) => ({ i, problems: listingProblems(l) }))
+      .filter((x) => x.problems.length);
+    if (blocking.length) {
+      return res.status(400).json({
+        error: blocking.map((x) => `Annonce ${x.i + 1} : ${x.problems.join(' ; ')}`).join('\n'),
+      });
+    }
     const pdf = await generatePdf(generalInfo, listings, getSettings());
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="selection-evolys.pdf"');

@@ -20,7 +20,7 @@ export async function generatePdf(generalInfo: GeneralInfo, listings: Listing[])
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ generalInfo, listings }),
   });
-  if (!r.ok) throw new Error('Génération échouée');
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Génération échouée');
   return r.blob();
 }
 

@@ -11,7 +11,7 @@ descriptions qui débordent sur plusieurs pages (corps de texte, plus petit) res
 rattachées à l'annonce en cours. Repli sur un seuil de longueur de texte si le PDF
 n'a pas de titre nettement plus gros que le corps.
 """
-import sys, os, json, fitz
+import sys, os, json, hashlib, fitz
 from collections import Counter
 
 TEXT_THRESHOLD = 120     # repli : caractères -> page "texte" d'annonce
@@ -28,7 +28,10 @@ def page_sizes(page):
                     sizes.append(round(s["size"], 1))
     return sizes
 
-def extract_images(doc, page, out_dir, page_index):
+def extract_images(doc, page, out_dir, page_index, seen):
+    """Extrait les images de la page. `seen` = empreintes déjà gardées pour l'annonce
+    en cours : MoteurImmo répète les premières photos (mosaïque + galerie), on ne
+    garde chaque photo identique qu'une fois."""
     paths = []
     for i, img in enumerate(page.get_images(full=True)):
         xref = img[0]
@@ -41,6 +44,10 @@ def extract_images(doc, page, out_dir, page_index):
         # ignorer les vignettes minuscules (icônes)
         if len(data) < 8000:
             continue
+        digest = hashlib.sha1(data).hexdigest()
+        if digest in seen:
+            continue
+        seen.add(digest)
         name = f"p{page_index}_img{i}.{ext}"
         fp = os.path.join(out_dir, name)
         with open(fp, "wb") as f:
@@ -67,16 +74,20 @@ def main(pdf_path, out_dir):
     # 2) Découpage.
     listings = []
     current = None
+    seen = set()
     for idx in range(doc.page_count):
         page = doc[idx]
         text = page.get_text().strip()
-        imgs = extract_images(doc, page, out_dir, idx)
 
         if use_font:
             # Nouvelle annonce ssi la page contient le gros titre.
             is_new = per_page_max[idx] >= title_size - TITLE_TOL
         else:
             is_new = len(text) >= TEXT_THRESHOLD
+
+        if is_new:
+            seen = set()  # dédoublonnage des photos remis à zéro à chaque annonce
+        imgs = extract_images(doc, page, out_dir, idx, seen)
 
         if is_new:
             current = {"textPageIndex": idx, "text": text,

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import type { GeneralInfo, Listing, Settings } from '@/types';
 import { uploadPdf, generatePdf, getSettings } from '@/lib/api';
+import { listingProblems } from '@/lib/validate';
 import { GeneralInfoForm } from '@/components/GeneralInfoForm';
 import { ListingEditor } from '@/components/ListingEditor';
-import { Upload, Loader2, FileDown, X, ArrowRight } from 'lucide-react';
+import { Upload, Loader2, FileDown, X, ArrowRight, AlertTriangle } from 'lucide-react';
 
 type Step = 'upload' | 'general' | 'listings' | 'done';
 
@@ -72,6 +73,11 @@ export default function App() {
       setLoading(false);
     }
   }
+
+  // Annonces qui ne peuvent pas partir chez le client (illisibles ou à 0 €).
+  const blocking = listings
+    .map((l, i) => ({ i, id: l.id, problems: listingProblems(l) }))
+    .filter((x) => x.problems.length);
 
   const updateListing = (l: Listing) =>
     setListings((prev) => prev.map((x, i) => (i === current ? l : x)));
@@ -145,6 +151,9 @@ export default function App() {
                           <span className="font-medium text-slate-700">{l.title}</span>
                           <span className="text-slate-400"> — {l.city} {l.postalCode}</span>
                           <span className="text-slate-400"> · {l.photos.length} photo{l.photos.length > 1 ? 's' : ''}</span>
+                          {listingProblems(l).length > 0 && (
+                            <span className="block text-xs text-red-600">⚠ {listingProblems(l).join(' ; ')}</span>
+                          )}
                         </span>
                       </span>
                       <span className="ml-3 flex items-center gap-3 shrink-0">
@@ -198,13 +207,36 @@ export default function App() {
                 <button onClick={() => setCurrent((c) => c + 1)}
                   className="px-4 py-2 rounded-lg bg-evolys text-white">Annonce suivante</button>
               ) : (
-                <button onClick={handleExport} disabled={loading}
-                  className="px-4 py-2 rounded-lg bg-evolys-accent text-white flex items-center gap-2">
+                <button onClick={handleExport} disabled={loading || blocking.length > 0}
+                  title={blocking.length ? 'Corrige les annonces signalées avant de générer le PDF' : undefined}
+                  className="px-4 py-2 rounded-lg bg-evolys-accent text-white flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
                   {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <FileDown className="h-4 w-4" />}
                   Générer le PDF
                 </button>
               )}
             </div>
+            {blocking.length > 0 && (
+              <div className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+                <div className="mb-2 flex items-center gap-2 font-medium">
+                  <AlertTriangle className="h-4 w-4" /> PDF bloqué : corrige ces annonces avant de générer
+                </div>
+                <ul className="space-y-1">
+                  {blocking.map((b) => (
+                    <li key={b.i}>
+                      <button onClick={() => setCurrent(b.i)} className="underline hover:text-red-900">
+                        Annonce {b.i + 1}
+                      </button>
+                      {' '}— {b.problems.join(' ; ')}
+                      {' '}
+                      <button onClick={() => { removeListing(b.id); setCurrent(0); if (listings.length <= 1) setStep('upload'); }}
+                        className="ml-1 rounded border border-red-300 px-2 py-0.5 text-xs hover:bg-red-100">
+                        Retirer cette annonce
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
