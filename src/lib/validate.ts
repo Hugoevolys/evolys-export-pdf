@@ -13,7 +13,7 @@ export function listingProblems(l: Listing): string[] {
     problems.push("l'outil n'a pas pu lire cette annonce (titre ou ville manquant) : retire-la ou redépose son PDF");
   }
   if (!(l.netSellerPrice > 0)) {
-    problems.push('prix net vendeur à 0 € : renseigne-le');
+    problems.push('prix de vente à 0 € : renseigne-le');
   }
   return problems;
 }

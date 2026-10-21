@@ -53,7 +53,7 @@ export function ListingEditor({
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <label className="text-sm">
-          <span className="text-slate-600">Prix net vendeur (€)</span>
+          <span className="text-slate-600">Prix de vente (€)</span>
           <input type="number" className="mt-1 w-full border rounded-lg px-3 py-2"
             value={listing.netSellerPrice}
             onChange={(e) => {
@@ -107,7 +107,7 @@ export function ListingEditor({
       </div>
 
       <div className="bg-slate-50 rounded-lg p-3 text-sm mb-4">
-        <div className="flex justify-between"><span>Prix net vendeur</span><span>{euro(cost.netSellerPrice)}</span></div>
+        <div className="flex justify-between"><span>Prix de vente</span><span>{euro(cost.netSellerPrice)}</span></div>
         <div className="flex justify-between"><span>Commission Evolys</span><span>{euro(cost.commission)}</span></div>
         <div className="flex justify-between"><span>Frais de notaire (est.)</span><span>{euro(cost.notary)}</span></div>
         <div className="flex justify-between font-semibold text-evolys border-t mt-1 pt-1">

@@ -74,7 +74,7 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
     <div class="chips">${features}</div>
     <p class="desc">${l.description}</p>
     <table class="cost">
-      <tr><td>Prix d'achat net</td><td>${euro(c.netSellerPrice)}</td></tr>
+      <tr><td>Prix de vente</td><td>${euro(c.netSellerPrice)}</td></tr>
       <tr><td>Commission Evolys</td><td>${euro(c.commission)}</td></tr>
       <tr><td>Frais de notaire (est.)</td><td>${euro(c.notary)}</td></tr>
       <tr class="total"><td>COÛT GLOBAL</td><td>${euro(c.total)}</td></tr>
