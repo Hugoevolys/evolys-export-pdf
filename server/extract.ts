@@ -14,7 +14,19 @@ Règles :
   "netSellerPrice" comme point de départ (le conseiller la validera).
 - Uniformise la description : orthographe, ponctuation, ton professionnel et neutre.
 - Ne rien inventer ; mettre null si une donnée est absente.
-- Si le texte contient plusieurs annonces, ne garde que la première.`;
+- Si le texte contient plusieurs annonces, ne garde que la première.
+- AUCUN tiret cadratin (—) ni demi-cadratin (–), ni dans le titre ni dans la description :
+  utilise une virgule, deux-points, des parenthèses ou un point. Le trait d'union des mots
+  composés (Saint-Germain, rez-de-chaussée) reste.`;
+
+/** Filet de sécurité de la règle zéro tiret : « A – B » → « A, B », puce « — x » → « x ». */
+const sansTirets = (t: string) =>
+  t
+    .replace(/^[ \t]*[–—][ \t]*/gm, '')
+    .replace(/[ \t]*[–—][ \t]*/g, ', ')
+    .replace(/,\s*,/g, ',')
+    .replace(/,\s*([.:;!?)]|$)/gm, '$1')
+    .trim();
 
 // Sortie forcée via un outil : le modèle ne peut plus répondre en prose
 // (bug du 02/11 : « Je détecte… » au lieu du JSON → tout l'upload échouait).
@@ -77,7 +89,7 @@ export async function extractListing(raw: RawListing): Promise<Listing> {
 
   return {
     id: randomUUID(),
-    title: data.title ?? 'Annonce',
+    title: sansTirets(data.title ?? 'Annonce'),
     city: data.city ?? '',
     postalCode: data.postalCode ?? '',
     surface: data.surface ?? 0,
@@ -86,8 +98,8 @@ export async function extractListing(raw: RawListing): Promise<Listing> {
     landSurface: data.landSurface ?? undefined,
     dpe: data.dpe ?? undefined,
     ges: data.ges ?? undefined,
-    description: data.description ?? '',
-    features: Array.isArray(data.features) ? data.features : [],
+    description: sansTirets(data.description ?? ''),
+    features: Array.isArray(data.features) ? data.features.map(sansTirets) : [],
     netSellerPrice: data.netSellerPrice ?? 0,
     isNewBuild: Boolean(data.isNewBuild),
     mandateType: 'simple',
