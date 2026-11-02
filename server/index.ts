@@ -17,7 +17,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'prix-de-vente'; // marqueur de version (vérif déploiement)
+const BUILD = 'extract-tool-use'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');
@@ -37,7 +37,7 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
       const listing = await extractListing(raw);
       // Photos source insérées telles quelles (aucune retouche).
       listing.photos = raw.photoPages.flatMap((pg) => pg.imagePaths);
-      if (raw.splitWarning) listing.splitWarning = raw.splitWarning;
+      if (raw.splitWarning) listing.splitWarning = [listing.splitWarning, raw.splitWarning].filter(Boolean).join(' ');
       listings.push(listing);
     }
     res.json({ uploadId, listings });
