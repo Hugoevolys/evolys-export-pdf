@@ -27,6 +27,7 @@ TITLE_TOL = 0.5          # tolérance d'égalité de taille (arrondis)
 HEADER_MAX_LINE = 3      # l'en-tête est au plus en 4e ligne (titre long sur 3 lignes)
 TITLE_MAX_LEN = 120      # une ligne de titre au-dessus de l'en-tête reste courte
 SENTENCE_END = (".", ",", ";", ":", "!", "?")
+TITLE_FORBIDDEN_END = (",", ";", ":")  # fin de la dernière ligne de titre
 
 # « Précy-sur-Marne (77410) - 243 000€ (4 050€/m²) » — ligne entière, prix facultatif.
 HEADER_RE = re.compile(
@@ -42,7 +43,14 @@ def has_header(text):
         if HEADER_RE.match(lines[k]):
             # Tout ce qui est au-dessus doit ressembler à un titre : lignes courtes, pas de
             # fin de phrase. Écarte une page de description qui déborde (« … écoles. »).
-            return all(len(t) <= TITLE_MAX_LEN and not t.endswith(SENTENCE_END) for t in lines[:k])
+            # Exception : la dernière ligne du titre peut finir par « . », « ! » ou « ? »
+            # (titres d'agence « Maison T5 vue mer St-Paul. », bug du 16/11/2026).
+            title = lines[:k]
+            if any(len(t) > TITLE_MAX_LEN for t in title):
+                return False
+            if any(t.endswith(SENTENCE_END) for t in title[:-1]):
+                return False
+            return not title[-1].endswith(TITLE_FORBIDDEN_END)
     return False
 
 def page_sizes(page):
@@ -118,6 +126,10 @@ def main(pdf_path, out_dir):
         page = doc[idx]
         text = texts[idx]
         is_new = idx in starts
+        # Filet : une page avant le premier début détecté n'est jamais jetée en silence.
+        orphan = False
+        if current is None and not is_new and (text or page.get_images()):
+            is_new = orphan = True
 
         if is_new:
             seen = set()  # dédoublonnage des photos remis à zéro à chaque annonce
@@ -126,6 +138,11 @@ def main(pdf_path, out_dir):
         if is_new:
             current = {"textPageIndex": idx, "text": text,
                        "photoPages": [{"pageIndex": idx, "imagePaths": imgs}]}
+            if orphan:
+                current["splitWarning"] = (
+                    "Début d'annonce non reconnu : vérifie le titre, le prix et les photos "
+                    f"(page {idx + 1} du PDF source)."
+                )
             listings.append(current)
         elif current is not None:
             # Page rattachée à l'annonce en cours (photos + description qui déborde).
