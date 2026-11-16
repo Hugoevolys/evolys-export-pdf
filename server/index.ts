@@ -17,7 +17,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'titre-avec-point'; // marqueur de version (vérif déploiement)
+const BUILD = 'decoupe-structurelle-tests'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');
@@ -30,17 +30,27 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'PDF manquant' });
     const uploadId = path.basename(req.file.path);
     const workDir = path.join(TMP, uploadId);
-    const raws = splitPdf(req.file.path, workDir);
+    const { listings: raws, report } = splitPdf(req.file.path, workDir);
+    console.log(`[upload] ${req.file.originalname} : ${report.pages} pages, ${report.listings} annonces, méthode ${report.method}` +
+      (report.warnings.length ? `, alertes : ${report.warnings.join(' | ')}` : '') + (report.error ? `, ERREUR : ${report.error}` : ''));
+    if (report.error) return res.status(400).json({ error: `${req.file.originalname} : ${report.error}` });
 
-    const listings = [];
-    for (const raw of raws) {
-      const listing = await extractListing(raw);
-      // Photos source insérées telles quelles (aucune retouche).
-      listing.photos = raw.photoPages.flatMap((pg) => pg.imagePaths);
-      if (raw.splitWarning) listing.splitWarning = [listing.splitWarning, raw.splitWarning].filter(Boolean).join(' ');
-      listings.push(listing);
-    }
-    res.json({ uploadId, listings });
+    // 3 annonces lues en parallèle : plus rapide, sans saturer l'API.
+    const listings: Listing[] = new Array(raws.length);
+    let next = 0;
+    const worker = async () => {
+      while (next < raws.length) {
+        const i = next++;
+        const raw = raws[i];
+        const listing = await extractListing(raw);
+        // Photos source insérées telles quelles (aucune retouche).
+        listing.photos = raw.photoPages.flatMap((pg) => pg.imagePaths);
+        if (raw.splitWarning) listing.splitWarning = [listing.splitWarning, raw.splitWarning].filter(Boolean).join(' ');
+        listings[i] = listing;
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    res.json({ uploadId, listings, report: { ...report, fileName: req.file.originalname } });
   } catch (e: any) {
     console.error(e);
     res.status(500).json({ error: e.message });

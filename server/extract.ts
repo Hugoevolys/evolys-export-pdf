@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Listing } from '../src/types/index.ts';
-import type { RawListing } from './pdfSplit.ts';
+import type { RawListing, RawHeader } from './pdfSplit.ts';
+import { DEFAULT_TITLE } from '../src/lib/validate.ts';
 import { randomUUID } from 'node:crypto';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -83,13 +84,50 @@ export async function extractListing(raw: RawListing): Promise<Listing> {
       data = await callModel(raw);
     } catch (e2: any) {
       console.error('[extract] 2e essai échoué :', e2.message, '| début du texte :', raw.text.slice(0, 200));
-      warning = "Cette annonce n'a pas pu être lue automatiquement : complétez titre, ville et prix à la main (ou retirez-la).";
+      warning = "Cette annonce n'a pas pu être lue automatiquement : complète titre, ville, prix et description à la main (ou retire-la).";
     }
   }
 
+  if (warning && raw.header) {
+    // Les données clés sont lues dans le PDF : seule la description manque.
+    warning = "La description n'a pas pu être retraitée automatiquement : complète-la avant l'envoi.";
+  }
+  return applyHeader(buildListing(data, warning), raw.header);
+}
+
+/**
+ * Les valeurs lues directement dans la fiche MoteurImmo (ville, CP, prix, pièces, surfaces,
+ * DPE) priment sur la lecture IA : elles sont exactes par construction. L'IA garde le
+ * titre (s'il est lisible), la description nettoyée et les atouts.
+ */
+export function applyHeader(l: Listing, h?: RawHeader): Listing {
+  if (!h) return l;
+  const out = { ...l };
+  if (h.city) out.city = h.city;
+  if (h.postalCode) out.postalCode = h.postalCode;
+  if (!out.title?.trim() || out.title.trim() === DEFAULT_TITLE) {
+    if (h.title) out.title = sansTirets(h.title);
+  }
+  if (h.rooms != null) out.rooms = h.rooms;
+  if (h.bedrooms != null) out.bedrooms = h.bedrooms;
+  if (h.surface != null) out.surface = h.surface;
+  if (h.landSurface != null) out.landSurface = h.landSurface;
+  if (h.dpe) out.dpe = h.dpe;
+  if (h.ges) out.ges = h.ges;
+  if (h.price != null && h.price > 0 && out.netSellerPrice !== h.price) {
+    if (out.netSellerPrice > 0) {
+      console.warn(`[extract] prix IA ${out.netSellerPrice} ≠ prix fiche ${h.price} : fiche retenue`);
+    }
+    out.netSellerPrice = h.price;
+    out.notaryOverride = Math.round((h.price * out.notaryRate) / 100);
+  }
+  return out;
+}
+
+function buildListing(data: any, warning?: string): Listing {
   return {
     id: randomUUID(),
-    title: sansTirets(data.title ?? 'Annonce'),
+    title: sansTirets(data.title ?? DEFAULT_TITLE),
     city: data.city ?? '',
     postalCode: data.postalCode ?? '',
     surface: data.surface ?? 0,

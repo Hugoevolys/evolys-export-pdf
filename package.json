@@ -12,7 +12,8 @@
     "dev:server": "tsx watch server/index.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "start:server": "tsx server/index.ts"
+    "start:server": "tsx server/index.ts",
+    "test": "python3 server/tests/test_split.py && tsx server/tests/test_header.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

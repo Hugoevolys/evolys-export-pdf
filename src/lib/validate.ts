@@ -15,5 +15,8 @@ export function listingProblems(l: Listing): string[] {
   if (!(l.netSellerPrice > 0)) {
     problems.push('prix de vente à 0 € : renseigne-le');
   }
+  if (!l.description?.trim()) {
+    problems.push('description vide : rédige-la ou retire l\'annonce');
+  }
   return problems;
 }

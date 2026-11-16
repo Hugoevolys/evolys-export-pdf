@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { GeneralInfo, Listing, Settings } from '@/types';
+import type { GeneralInfo, Listing, Settings, SplitReport } from '@/types';
 import { uploadPdf, generatePdf, getSettings } from '@/lib/api';
 import { listingProblems } from '@/lib/validate';
 import { GeneralInfoForm } from '@/components/GeneralInfoForm';
@@ -21,6 +21,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState<GeneralInfo>(emptyInfo);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [reports, setReports] = useState<SplitReport[]>([]);
   const [current, setCurrent] = useState(0);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -32,17 +33,20 @@ export default function App() {
     );
     if (!pdfs.length) return;
     setLoading(true); setError('');
-    try {
-      // Traite chaque document déposé et cumule les annonces extraites.
-      for (const file of pdfs) {
+    // Traite chaque document déposé et cumule les annonces extraites.
+    // Un fichier en échec n'empêche pas les suivants.
+    const errors: string[] = [];
+    for (const file of pdfs) {
+      try {
         const res = await uploadPdf(file);
         setListings((prev) => [...prev, ...res.listings]);
+        if (res.report) setReports((prev) => [...prev, res.report!]);
+      } catch (e: any) {
+        errors.push(e.message);
       }
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
     }
+    setError(errors.join('\n'));
+    setLoading(false);
   }
 
   const removeListing = (id: string) =>
@@ -89,7 +93,7 @@ export default function App() {
         <span className="text-xs font-medium uppercase tracking-wider text-evolys/60">Export PDF Annonces</span>
       </header>
 
-      {error && <div className="max-w-3xl mx-auto mb-4 bg-red-50 text-red-700 rounded-lg p-3">{error}</div>}
+      {error && <div className="max-w-3xl mx-auto mb-4 bg-red-50 text-red-700 rounded-lg p-3 whitespace-pre-line">{error}</div>}
 
       <main className="max-w-3xl mx-auto">
         {step === 'upload' && (
@@ -140,6 +144,22 @@ export default function App() {
                   <span className="text-sm text-slate-400">Vérifiez la liste avant de continuer</span>
                 )}
               </div>
+
+              {/* Bilan par PDF déposé : le conseiller compare avec ce qu'il a exporté. */}
+              {reports.length > 0 && (
+                <ul className="mt-3 space-y-1 text-xs text-slate-500">
+                  {reports.map((r, i) => (
+                    <li key={i}>
+                      <span className="font-medium text-slate-600">{r.fileName ?? `PDF ${i + 1}`}</span>
+                      {' : '}{r.listings} annonce{r.listings > 1 ? 's' : ''} trouvée{r.listings > 1 ? 's' : ''} sur {r.pages} pages.
+                      {' '}Il en manque ? Signale-le avec le PDF.
+                      {r.warnings.map((w, j) => (
+                        <span key={j} className="block text-amber-600">⚠ {w}</span>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {listings.length > 0 && (
                 <ul className="mt-3 space-y-2">
@@ -247,7 +267,7 @@ export default function App() {
           <div className="bg-white rounded-xl shadow p-10 text-center">
             <h2 className="text-xl font-semibold mb-2">PDF généré ✅</h2>
             <p className="text-slate-500">Le fichier a été téléchargé. Tu peux relancer une nouvelle session.</p>
-            <button onClick={() => { setStep('upload'); setListings([]); setCurrent(0); }}
+            <button onClick={() => { setStep('upload'); setListings([]); setReports([]); setCurrent(0); }}
               className="mt-4 px-4 py-2 rounded-lg bg-evolys text-white">Nouvelle session</button>
           </div>
         )}

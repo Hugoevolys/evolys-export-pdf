@@ -1,0 +1,64 @@
+{
+  "_lisezmoi": "Résultat attendu du découpeur pour chaque fixture. starts = page (0-based) de chaque fiche ; photos = nb de photos gardées par annonce ; warn = annonce avec avertissement ; reportWarnings = nb d'alertes globales ; error = PDF refusé.",
+
+  "real/reunion-titre-point-2026-11-16.pdf": {
+    "_bug": "16/11/2026, Alexandre Leroux : titre finissant par un point, 1re annonce perdue",
+    "starts": [0, 15, 28], "photos": [27, 24, 3],
+    "cities": ["Saint-Paul", "Saint-Paul", "Les Trois-Bassins"],
+    "postalCodes": ["97460", "97423", "97426"],
+    "prices": [330000, 345000, 350000],
+    "warn": [false, false, false], "reportWarnings": 0
+  },
+  "real/seine-et-marne-4-annonces.pdf": {
+    "_bug": "02/10/2026 : photos de 2 biens mélangées (référence du découpage par en-tête)",
+    "starts": [0, 7, 18, 22], "photos": [11, 20, 5, 6],
+    "cities": ["Précy-sur-Marne", "Couilly-Pont-aux-Dames", "Couilly-Pont-aux-Dames", "Saint-Germain-sur-Morin"],
+    "prices": [243000, 239000, 239900, 249000],
+    "rooms": [3, 3, 5, 3], "surfaces": [60, 75, 92, 65], "dpe": ["D", "D", "E", "D"],
+    "warn": [false, false, false, false], "reportWarnings": 0
+  },
+  "real/jura-nbsp-cesure.pdf": {
+    "_bug": "espaces insécables + trait de césure (\\xad) dans l'en-tête",
+    "starts": [0, 2, 4], "photos": [3, 3, 3],
+    "cities": ["Dole", "Damparis", "Évans"], "prices": [239000, 239000, 239000],
+    "warn": [false, false, false], "reportWarnings": 0
+  },
+  "real/selection-evolys-redeposee.pdf": {
+    "_bug": "PDF Evolys déjà généré, re-déposé à la place de l'export MoteurImmo",
+    "error": true
+  },
+
+  "synth/titres-ponctuation.pdf": {
+    "starts": [0, 3, 6, 9], "photos": [8, 8, 8, 8],
+    "titles": ["Maison T5 avec vue mer St-Paul.", "Exclusivité :", "Coup de cœur !", "Pourquoi attendre ?"],
+    "prices": [330000, 239000, 199000, 150000],
+    "warn": [false, false, false, false], "reportWarnings": 0
+  },
+  "synth/titre-long-corse.pdf": {
+    "starts": [0, 3], "postalCodes": ["2A004", "2B033"], "prices": [345000, 210000],
+    "warn": [false, false], "reportWarnings": 0
+  },
+  "synth/entete-sans-prix.pdf": {
+    "starts": [0, 3], "cities": ["Précy-sur-Marne", "Couilly-Pont-aux-Dames"], "prices": [null, null],
+    "warn": [false, false], "reportWarnings": 0
+  },
+  "synth/page-de-garde.pdf": {
+    "_bug": "page blanche puis page de garde sans photo avant la 1re fiche",
+    "starts": [2, 5], "cities": ["Dole", "Évans"],
+    "warn": [false, false], "reportWarnings": 1
+  },
+  "synth/description-debordante.pdf": {
+    "_bug": "description sur 2 pages qui cite « Ville (CP) - prix€ » : ne doit pas couper",
+    "starts": [0, 3], "photos": [6, 8],
+    "warn": [false, false], "reportWarnings": 0
+  },
+  "synth/titre-trop-long.pdf": {
+    "_bug": "en-tête trop bas pour être retenu : l'annonce n'est pas perdue en silence",
+    "starts": [0], "warn": [true], "reportWarnings": 1
+  },
+  "synth/hors-format.pdf": {
+    "starts": [0, 2], "warn": [false, false], "reportWarnings": 1
+  },
+  "synth/selection-evolys.pdf": { "error": true },
+  "synth/vide.pdf": { "error": true }
+}

@@ -51,6 +51,30 @@ export function ListingEditor({
         )}
       </div>
 
+      {/* Texte de l'annonce : modifiable si la lecture automatique a raté quelque chose. */}
+      <div className="grid grid-cols-4 gap-3 mb-3">
+        <label className="text-sm col-span-4">
+          <span className="text-slate-600">Titre</span>
+          <input className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.title} onChange={(e) => set({ title: e.target.value })} />
+        </label>
+        <label className="text-sm col-span-3">
+          <span className="text-slate-600">Ville</span>
+          <input className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.city} onChange={(e) => set({ city: e.target.value })} />
+        </label>
+        <label className="text-sm">
+          <span className="text-slate-600">Code postal</span>
+          <input className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.postalCode} onChange={(e) => set({ postalCode: e.target.value })} />
+        </label>
+        <label className="text-sm col-span-4">
+          <span className="text-slate-600">Description</span>
+          <textarea className="mt-1 w-full border rounded-lg px-3 py-2" rows={5}
+            value={listing.description} onChange={(e) => set({ description: e.target.value })} />
+        </label>
+      </div>
+
       <div className="grid grid-cols-2 gap-3 mb-3">
         <label className="text-sm">
           <span className="text-slate-600">Prix de vente (€)</span>

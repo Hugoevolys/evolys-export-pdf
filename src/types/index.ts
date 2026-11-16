@@ -42,6 +42,17 @@ export interface Listing {
   splitWarning?: string;
 }
 
+/** Bilan du découpage d'un PDF déposé (affiché au conseiller, rien n'est caché). */
+export interface SplitReport {
+  fileName?: string;
+  pages: number;
+  listings: number;
+  method: 'entete' | 'repli';
+  warnings: string[];
+  /** Posé quand le PDF est inutilisable (aucune annonce, sélection Evolys re-déposée…). */
+  error?: string;
+}
+
 export interface MandateRate {
   rate: number;  // % TTC
   floor: number; // honoraires minimum €

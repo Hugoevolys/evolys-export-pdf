@@ -28,6 +28,10 @@ RUN npm install
 # Code
 COPY . .
 
+# Tests de non-régression du découpage : s'ils échouent, le build échoue et
+# Render garde la version précédente en ligne (aucun découpeur cassé en prod).
+RUN npm test
+
 ENV NODE_ENV=production
 EXPOSE 3001
 CMD ["npm", "run", "start:server"]
