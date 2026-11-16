@@ -65,7 +65,8 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
   <section class="listing">
     <h2>Annonce ${index} — ${l.title}</h2>
     <div class="loc">${l.city} ${l.postalCode ? '(' + l.postalCode + ')' : ''}</div>
-    <div class="gallery">${photos}</div>
+    <!-- Texte d'abord, photos ensuite (retour client 16/11 : avec 20-30 photos, le texte
+         arrivait trop loin). -->
     <div class="specs">
       <span>${l.surface} m²</span><span>${l.rooms} pièces</span><span>${l.bedrooms} ch.</span>
       ${l.landSurface ? `<span>terrain ${l.landSurface} m²</span>` : ''}
@@ -80,6 +81,7 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
       <tr class="total"><td>COÛT GLOBAL</td><td>${euro(c.total)}</td></tr>
     </table>
     ${l.advisorComment ? `<div class="comment"><strong>Le commentaire de votre conseiller ${advisorFirstName} :</strong> ${l.advisorComment}</div>` : ''}
+    ${photos ? `<h3 class="photos-title">Photos du bien</h3><div class="gallery">${photos}</div>` : ''}
   </section>`;
 }
 
@@ -96,8 +98,10 @@ const PAGE_STYLE = `
     .cover .advisor { margin-top: 24px; font-size: 14px; color: #44566b; }
     h2 { color: #00286E; font-size: 20px; margin-bottom: 2px; }
     .loc { color: #44566b; margin-bottom: 10px; }
+    .photos-title { font-family: 'Quattrocento', Georgia, serif; color: #00286E; font-size: 16px; margin: 22px 0 8px; break-after: avoid; page-break-after: avoid; }
     .gallery { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-    .photo { width: 100%; height: auto; border-radius: 8px; break-inside: avoid; page-break-inside: avoid; }
+    /* Hauteur bornée : 2 photos par page, sans grand blanc quand une photo haute ne tient plus. */
+    .photo { max-width: 100%; max-height: 120mm; width: auto; height: auto; align-self: center; border-radius: 8px; break-inside: avoid; page-break-inside: avoid; }
     .specs span, .chip { display: inline-block; background: #DDF3FF; border-radius: 4px; padding: 3px 8px; margin: 2px; font-size: 12px; }
     .desc { font-size: 13px; line-height: 1.5; margin: 12px 0; }
     table.cost { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }
