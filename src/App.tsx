@@ -1,12 +1,41 @@
 import { useState, useEffect } from 'react';
-import type { GeneralInfo, Listing, Settings, SplitReport } from '@/types';
-import { uploadPdf, generatePdf, getSettings } from '@/lib/api';
+import type { GeneralInfo, Listing, SessionEvolys, Settings, SplitReport } from '@/types';
+import { uploadPdf, generatePdf, getSettings, publierSelection, renouvelerJeton, sessionEvolys } from '@/lib/api';
 import { listingProblems } from '@/lib/validate';
-import { GeneralInfoForm } from '@/components/GeneralInfoForm';
+import { ACHETEUR_LIBRE, GeneralInfoForm } from '@/components/GeneralInfoForm';
 import { ListingEditor } from '@/components/ListingEditor';
 import { Upload, Loader2, FileDown, X, ArrowRight, AlertTriangle } from 'lucide-react';
 
 type Step = 'upload' | 'general' | 'listings' | 'done';
+
+// ─── Espace client Evolys (18/11/2026) ────────────────────────────────────
+// Quand l'outil est ouvert depuis l'espace conseiller, l'adresse porte
+// « #jeton=… » (fragment : jamais envoyé à un serveur). Sans jeton, aucune de
+// ces lignes ne s'exécute et l'outil fonctionne exactement comme avant.
+const CLE_JETON = 'evolys-export-jeton';
+const RENOUVELLEMENT_MS = 30 * 60 * 1000;
+
+function lireJeton(): string | null {
+  const m = window.location.hash.match(/jeton=([A-Za-z0-9._-]+)/);
+  if (m) {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    try { sessionStorage.setItem(CLE_JETON, m[1]); } catch { /* navigation privée */ }
+    return m[1];
+  }
+  try { return sessionStorage.getItem(CLE_JETON); } catch { return null; }
+}
+
+/** Mandat de la fiche → type d'honoraires de l'outil (réponse 4 d'Hugo). */
+function typeMandatOutil(typeMandat: string | null): Listing['mandateType'] | null {
+  if (!typeMandat) return null;
+  return /confiance/i.test(typeMandat) ? 'exclusif' : /simple/i.test(typeMandat) ? 'simple' : null;
+}
+
+type Publication =
+  | { etat: 'aucune' }
+  | { etat: 'en-cours'; prenom: string }
+  | { etat: 'ok'; prenom: string; biens: number }
+  | { etat: 'erreur'; prenom: string; message: string };
 
 const emptyInfo: GeneralInfo = {
   clientFirstName: '', clientLastName: '',
@@ -26,6 +55,77 @@ export default function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [dragActive, setDragActive] = useState(false);
   useEffect(() => { getSettings().then(setSettings).catch(() => {}); }, []);
+
+  // Espace client Evolys : rien de ceci n'est actif sans jeton.
+  const [jeton, setJeton] = useState<string | null>(null);
+  const [session, setSession] = useState<SessionEvolys | null>(null);
+  const [erreurSession, setErreurSession] = useState('');
+  const [publier, setPublier] = useState(true);
+  const [publication, setPublication] = useState<Publication>({ etat: 'aucune' });
+  const [envoi, setEnvoi] = useState<{ cle: string; pdf: Blob; listings: Listing[]; contactId: string } | null>(null);
+
+  useEffect(() => {
+    const j = lireJeton();
+    if (!j) return;
+    setJeton(j);
+    sessionEvolys(j)
+      .then((s) => {
+        setSession(s);
+        // Coordonnées du conseiller préremplies (modifiables).
+        setInfo((i) => ({
+          ...i,
+          advisorFirstName: s.conseiller.prenom,
+          advisorLastName: s.conseiller.nom,
+          advisorPhone: s.conseiller.telephone,
+          advisorEmail: s.conseiller.email,
+          advisorRsac: s.conseiller.rsac,
+          advisorRsacCity: s.conseiller.villeRsac,
+          advisorAddress: s.conseiller.adresse,
+        }));
+      })
+      .catch((e: Error) => setErreurSession(e.message));
+  }, []);
+
+  // Une session de travail peut durer plus d'une heure : le jeton (8 h) est
+  // renouvelé toutes les 30 minutes tant qu'il est valide (ajout B d'Hugo).
+  useEffect(() => {
+    if (!jeton) return;
+    const t = setInterval(() => {
+      renouvelerJeton(jeton)
+        .then(({ jeton: neuf }) => {
+          setJeton(neuf);
+          try { sessionStorage.setItem(CLE_JETON, neuf); } catch { /* rien */ }
+        })
+        .catch(() => { /* l'erreur apparaîtra à la publication, avec un message clair */ });
+    }, RENOUVELLEMENT_MS);
+    return () => clearInterval(t);
+  }, [jeton]);
+
+  const acheteurChoisi = session?.acheteurs.find((a) => a.id === info.acheteurId) ?? null;
+  const publicationPossible = !!jeton && !!acheteurChoisi;
+
+  function choisirAcheteur(a: SessionEvolys['acheteurs'][number] | null) {
+    if (!a) {
+      setInfo((i) => ({ ...i, acheteurId: ACHETEUR_LIBRE, clientFirstName: '', clientLastName: '' }));
+      return;
+    }
+    setInfo((i) => ({ ...i, acheteurId: a.id, clientFirstName: a.prenom, clientLastName: a.nom }));
+    setPublier(true);
+    // Honoraires présélectionnés d'après le mandat de la fiche (modifiable annonce par annonce).
+    const type = typeMandatOutil(a.typeMandat);
+    if (type) setListings((prev) => prev.map((l) => ({ ...l, mandateType: type, commissionOverride: undefined })));
+  }
+
+  async function lancerPublication(e: { cle: string; pdf: Blob; listings: Listing[]; contactId: string }, prenom: string) {
+    if (!jeton) return;
+    setPublication({ etat: 'en-cours', prenom });
+    try {
+      const r = await publierSelection({ jeton, contactId: e.contactId, cle: e.cle, listings: e.listings, pdf: e.pdf });
+      setPublication({ etat: 'ok', prenom, biens: r.biens });
+    } catch (err: any) {
+      setPublication({ etat: 'erreur', prenom, message: err.message });
+    }
+  }
 
   async function handleAddFiles(files: FileList | File[]) {
     const pdfs = Array.from(files).filter(
@@ -71,6 +171,15 @@ export default function App() {
       const a = document.createElement('a');
       a.href = url; a.download = 'selection-evolys.pdf'; a.click();
       setStep('done');
+      // Le PDF est toujours téléchargé d'abord ; la publication part ensuite,
+      // à part : son échec ne touche jamais le PDF (ajout B d'Hugo).
+      if (publicationPossible && publier) {
+        const e = { cle: crypto.randomUUID(), pdf: blob, listings, contactId: acheteurChoisi!.id };
+        setEnvoi(e);
+        void lancerPublication(e, acheteurChoisi!.prenom);
+      } else {
+        setPublication({ etat: 'aucune' });
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -211,7 +320,20 @@ export default function App() {
         )}
 
         {step === 'general' && (
-          <GeneralInfoForm value={info} onChange={setInfo} onNext={() => setStep('listings')} />
+          <>
+            {erreurSession && (
+              <div className="max-w-lg mx-auto mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                Liste de vos acheteurs indisponible : {erreurSession} Vous pouvez continuer, le PDF sera généré comme d'habitude.
+              </div>
+            )}
+            <GeneralInfoForm
+              value={info}
+              onChange={setInfo}
+              onNext={() => setStep('listings')}
+              acheteurs={session?.acheteurs}
+              onChoisirAcheteur={choisirAcheteur}
+            />
+          </>
         )}
 
         {step === 'listings' && listings[current] && settings && (
@@ -238,6 +360,12 @@ export default function App() {
                 </button>
               )}
             </div>
+            {publicationPossible && current === listings.length - 1 && (
+              <label className="mt-4 flex items-center justify-end gap-2 text-sm text-slate-700">
+                <input type="checkbox" checked={publier} onChange={(e) => setPublier(e.target.checked)} />
+                Publier dans l'espace client de {acheteurChoisi!.prenom}
+              </label>
+            )}
             {blocking.length > 0 && (
               <div className="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
                 <div className="mb-2 flex items-center gap-2 font-medium">
@@ -267,7 +395,27 @@ export default function App() {
           <div className="bg-white rounded-xl shadow p-10 text-center">
             <h2 className="text-xl font-semibold mb-2">PDF généré ✅</h2>
             <p className="text-slate-500">Le fichier a été téléchargé. Tu peux relancer une nouvelle session.</p>
-            <button onClick={() => { setStep('upload'); setListings([]); setReports([]); setCurrent(0); }}
+            {publication.etat === 'en-cours' && (
+              <p className="mt-4 text-sm text-slate-600">Publication dans l'espace client de {publication.prenom}…</p>
+            )}
+            {publication.etat === 'ok' && (
+              <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+                Sélection publiée dans l'espace client de {publication.prenom} ({publication.biens} bien{publication.biens > 1 ? 's' : ''}).
+                {' '}{publication.prenom} reçoit un SMS, et les biens sont dans tes « Biens potentiels ».
+              </p>
+            )}
+            {publication.etat === 'erreur' && (
+              <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                Ton PDF est bien téléchargé, mais la sélection n'a pas pu être publiée dans l'espace de {publication.prenom} : {publication.message}
+                {envoi && (
+                  <button onClick={() => lancerPublication(envoi, publication.prenom)}
+                    className="mt-2 block mx-auto rounded-lg border border-red-300 px-3 py-1.5 hover:bg-red-100">
+                    Réessayer la publication
+                  </button>
+                )}
+              </div>
+            )}
+            <button onClick={() => { setStep('upload'); setListings([]); setReports([]); setCurrent(0); setPublication({ etat: 'aucune' }); setEnvoi(null); }}
               className="mt-4 px-4 py-2 rounded-lg bg-evolys text-white">Nouvelle session</button>
           </div>
         )}

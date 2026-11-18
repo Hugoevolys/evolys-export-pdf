@@ -10,6 +10,14 @@ export interface GeneralInfo {
   advisorRsac: string;     // n° RSAC du conseiller (mentions légales)
   advisorRsacCity: string; // ville d'immatriculation RSAC
   advisorAddress: string;  // adresse professionnelle du conseiller
+  /** Espace client Evolys : acheteur choisi dans la liste (outil ouvert avec un jeton). */
+  acheteurId?: string;
+}
+
+/** Session de l'espace conseiller Evolys (outil ouvert avec un jeton, 18/11/2026). */
+export interface SessionEvolys {
+  conseiller: { prenom: string; nom: string; telephone: string; email: string; rsac: string; villeRsac: string; adresse: string };
+  acheteurs: { id: string; prenom: string; nom: string; typeMandat: string | null }[];
 }
 
 export type MandateType = 'simple' | 'exclusif';

@@ -9,6 +9,7 @@ import { splitPdf } from './pdfSplit.ts';
 import { extractListing } from './extract.ts';
 import { generatePdf } from './pdfGenerate.ts';
 import { getSettings, setSettings } from './settings.ts';
+import { ErreurErp, erpConfigure, publierErp, renouvelerErp, sessionErp } from './erp.ts';
 import { listingProblems } from '../src/lib/validate.ts';
 import type { Listing } from '../src/types/index.ts';
 
@@ -17,7 +18,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'texte-avant-photos'; // marqueur de version (vérif déploiement)
+const BUILD = 'espace-client-lot3'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');
@@ -86,6 +87,56 @@ app.get('/api/file', (req, res) => {
   if (!fp.startsWith(TMP)) return res.status(403).end();
   if (!fs.existsSync(fp)) return res.status(404).end();
   res.sendFile(fp);
+});
+
+// 5) Espace client Evolys (18/11/2026) : utilisé seulement quand l'outil a
+//    été ouvert depuis l'espace conseiller avec un jeton. Le jeton voyage dans
+//    le corps des requêtes, jamais dans l'adresse (absent des journaux).
+const memoire = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 1 } });
+
+function repondreErreurErp(res: express.Response, e: any) {
+  if (e instanceof ErreurErp) return res.status(e.statut).json({ error: e.message });
+  console.error(e);
+  return res.status(500).json({ error: "La publication n'a pas pu aboutir. Réessayez dans un instant." });
+}
+
+app.post('/api/erp/session', async (req, res) => {
+  if (!erpConfigure()) return res.status(503).json({ error: 'Liaison avec Evolys non configurée.' });
+  try {
+    res.json(await sessionErp(String(req.body?.jeton ?? '')));
+  } catch (e) {
+    repondreErreurErp(res, e);
+  }
+});
+
+app.post('/api/erp/renouveler', async (req, res) => {
+  if (!erpConfigure()) return res.status(503).json({ error: 'Liaison avec Evolys non configurée.' });
+  try {
+    res.json(await renouvelerErp(String(req.body?.jeton ?? '')));
+  } catch (e) {
+    repondreErreurErp(res, e);
+  }
+});
+
+app.post('/api/erp/publier', memoire.single('pdf'), async (req, res) => {
+  if (!erpConfigure()) return res.status(503).json({ error: 'Liaison avec Evolys non configurée.' });
+  try {
+    if (!req.file) return res.status(400).json({ error: 'PDF manquant.' });
+    const { jeton, contactId, cle, listings } = JSON.parse(String(req.body?.donnees ?? '{}'));
+    const resultat = await publierErp({
+      jeton: String(jeton ?? ''),
+      contactId: String(contactId ?? ''),
+      cle: String(cle ?? ''),
+      listings: listings as Listing[],
+      settings: getSettings(),
+      pdf: req.file.buffer,
+      dossierTravail: TMP,
+    });
+    console.log(`[erp] sélection publiée : ${resultat?.biens ?? '?'} bien(s)${resultat?.dejaPubliee ? ' (déjà publiée)' : ''}`);
+    res.json(resultat);
+  } catch (e) {
+    repondreErreurErp(res, e);
+  }
 });
 
 // 4) Settings
