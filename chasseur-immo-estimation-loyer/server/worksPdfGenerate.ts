@@ -105,7 +105,7 @@ const CSS = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Quattrocento Sans', Helvetica, Arial, sans-serif; color: #1b2733; font-size: 11px; }
   h2 { font-family: 'Quattrocento', Georgia, serif; }
-  .content { padding: 16px 34px 8px; }
+  .content { padding: 0 34px 8px; }
   .bien { background: ${LIGHT}; border-left: 4px solid ${NAVY}; padding: 10px 12px; font-size: 11px; margin: 0 0 16px; }
   h2.sec { color: ${NAVY}; font-size: 15px; font-weight: 700; padding-bottom: 5px; border-bottom: 1.5px solid ${NAVY}; margin: 16px 0 10px; break-after: avoid; }
   p.para { font-size: 11px; line-height: 1.5; margin: 8px 0; }
@@ -154,7 +154,7 @@ export async function generateWorksPdf(d: WorksEstimate): Promise<Buffer> {
       displayHeaderFooter: true,
       headerTemplate: headerHtml(),
       footerTemplate: footerHtml(),
-      margin: { top: '62px', bottom: '52px', left: '0', right: '0' },
+      margin: { top: '78px', bottom: '52px', left: '0', right: '0' },
     });
     return Buffer.from(pdf);
   } finally {
