@@ -140,7 +140,7 @@ function buildListing(data: any, warning?: string): Listing {
     features: Array.isArray(data.features) ? data.features.map(sansTirets) : [],
     netSellerPrice: data.netSellerPrice ?? 0,
     isNewBuild: Boolean(data.isNewBuild),
-    mandateType: 'simple',
+    mandateType: 'exclusif', // mandat de confiance par défaut (Hugo, 20/11)
     notaryRate: data.isNewBuild ? 3 : 8.5,
     // Montant € pré-rempli = prix net × taux (le conseiller peut l'ajuster).
     notaryOverride: Math.round(((data.netSellerPrice ?? 0) * (data.isNewBuild ? 3 : 8.5)) / 100),

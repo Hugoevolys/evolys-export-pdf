@@ -91,8 +91,8 @@ export function ListingEditor({
           <select className="mt-1 w-full border rounded-lg px-3 py-2"
             value={listing.mandateType}
             onChange={(e) => set({ mandateType: e.target.value as MandateType })}>
+            <option value="exclusif">Mandat de confiance — {settings.mandates.exclusif.rate}% (min {euro(settings.mandates.exclusif.floor)})</option>
             <option value="simple">Mandat simple — {settings.mandates.simple.rate}% (min {euro(settings.mandates.simple.floor)})</option>
-            <option value="exclusif">Mandat exclusif — {settings.mandates.exclusif.rate}% (min {euro(settings.mandates.exclusif.floor)})</option>
           </select>
         </label>
         <label className="text-sm">
