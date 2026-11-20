@@ -17,7 +17,8 @@ export interface GeneralInfo {
 /** Session de l'espace conseiller Evolys (outil ouvert avec un jeton, 18/11/2026). */
 export interface SessionEvolys {
   conseiller: { prenom: string; nom: string; telephone: string; email: string; rsac: string; villeRsac: string; adresse: string };
-  acheteurs: { id: string; prenom: string; nom: string; typeMandat: string | null }[];
+  /** Acheteurs en cours ; `espace` = il a un espace client (les biens restent à envoyer depuis l'espace conseiller). */
+  acheteurs: { id: string; prenom: string; nom: string; typeMandat: string | null; espace?: boolean }[];
 }
 
 export type MandateType = 'simple' | 'exclusif';

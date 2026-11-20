@@ -61,19 +61,22 @@ export const sessionErp = (jeton: string) => appel('/export-pdf/session', jeton)
 export const renouvelerErp = (jeton: string) => appel('/export-pdf/jeton/renouveler', jeton, { method: 'POST' });
 
 /**
- * Publie une sélection dans l'espace du client : données nettoyées de chaque
- * annonce (coût global calculé comme dans le PDF), photos lues sur le disque
- * de l'outil (dossier de travail uniquement), et le PDF généré.
+ * Dépose les annonces dans les « Biens potentiels » du conseiller, rattachées
+ * à l'acheteur choisi (20/11/2026) : données nettoyées de chaque annonce (coût
+ * global calculé comme dans le PDF), photos lues sur le disque de l'outil
+ * (dossier de travail uniquement) et le PDF de CHAQUE annonce. Rien n'est
+ * publié chez le client : le conseiller envoie ensuite, bien par bien, depuis
+ * son espace.
  */
-export async function publierErp(params: {
+export async function deposerErp(params: {
   jeton: string;
   contactId: string;
   cle: string;
   listings: Listing[];
   settings: Settings;
-  pdf: Buffer;
+  pdfsParAnnonce: Buffer[];
   dossierTravail: string;
-}): Promise<any> {
+}): Promise<{ biens: number; dejaDeposes: boolean }> {
   const fd = new FormData();
   const annonces = params.listings.map((l, i) => {
     const cout = computeGlobalCost(l, params.settings);
@@ -85,11 +88,14 @@ export async function publierErp(params: {
       fd.append(`photo_${i}_${n}`, new Blob([fs.readFileSync(reel)]), path.basename(reel));
       n += 1;
     }
+    const pdf = params.pdfsParAnnonce[i];
+    if (pdf) fd.append(`pdf_${i}`, new Blob([new Uint8Array(pdf)], { type: 'application/pdf' }), `annonce-${i + 1}.pdf`);
     return {
       titre: l.title,
       ville: l.city,
       codePostal: l.postalCode || null,
       surface: Number.isFinite(l.surface) ? l.surface : null,
+      surfaceTerrain: l.landSurface && Number.isFinite(l.landSurface) ? l.landSurface : null,
       pieces: Number.isFinite(l.rooms) ? Math.round(l.rooms) : null,
       dpe: l.dpe ?? null,
       atouts: l.features ?? [],
@@ -103,6 +109,5 @@ export async function publierErp(params: {
     };
   });
   fd.append('donnees', JSON.stringify({ contactId: params.contactId, cle: params.cle, annonces }));
-  fd.append('pdf', new Blob([new Uint8Array(params.pdf)], { type: 'application/pdf' }), 'selection.pdf');
-  return appel('/export-pdf/selections', params.jeton, { method: 'POST', body: fd });
+  return appel('/export-pdf/biens', params.jeton, { method: 'POST', body: fd });
 }

@@ -7,9 +7,9 @@ import * as fs from 'node:fs';
 
 import { splitPdf } from './pdfSplit.ts';
 import { extractListing } from './extract.ts';
-import { generatePdf } from './pdfGenerate.ts';
+import { generatePdf, generatePdfsParAnnonce } from './pdfGenerate.ts';
 import { getSettings, setSettings } from './settings.ts';
-import { ErreurErp, erpConfigure, publierErp, renouvelerErp, sessionErp } from './erp.ts';
+import { ErreurErp, deposerErp, erpConfigure, renouvelerErp, sessionErp } from './erp.ts';
 import { listingProblems } from '../src/lib/validate.ts';
 import type { Listing } from '../src/types/index.ts';
 
@@ -18,7 +18,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'espace-client-lot3'; // marqueur de version (vérif déploiement)
+const BUILD = 'biens-potentiels-depot'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');
@@ -92,7 +92,6 @@ app.get('/api/file', (req, res) => {
 // 5) Espace client Evolys (18/11/2026) : utilisé seulement quand l'outil a
 //    été ouvert depuis l'espace conseiller avec un jeton. Le jeton voyage dans
 //    le corps des requêtes, jamais dans l'adresse (absent des journaux).
-const memoire = multer({ storage: multer.memoryStorage(), limits: { fileSize: 60 * 1024 * 1024, files: 1 } });
 
 function repondreErreurErp(res: express.Response, e: any) {
   if (e instanceof ErreurErp) return res.status(e.statut).json({ error: e.message });
@@ -118,21 +117,25 @@ app.post('/api/erp/renouveler', async (req, res) => {
   }
 });
 
-app.post('/api/erp/publier', memoire.single('pdf'), async (req, res) => {
+// Dépôt dans les « Biens potentiels » du conseiller (20/11/2026) : un PDF par
+// annonce est généré ici, rien n'est publié chez le client.
+app.post('/api/erp/deposer', async (req, res) => {
   if (!erpConfigure()) return res.status(503).json({ error: 'Liaison avec Evolys non configurée.' });
   try {
-    if (!req.file) return res.status(400).json({ error: 'PDF manquant.' });
-    const { jeton, contactId, cle, listings } = JSON.parse(String(req.body?.donnees ?? '{}'));
-    const resultat = await publierErp({
+    const { jeton, contactId, cle, listings, generalInfo } = req.body ?? {};
+    if (!Array.isArray(listings) || !listings.length) return res.status(400).json({ error: 'Aucune annonce à déposer.' });
+    const settings = getSettings();
+    const pdfsParAnnonce = await generatePdfsParAnnonce(generalInfo, listings as Listing[], settings);
+    const resultat = await deposerErp({
       jeton: String(jeton ?? ''),
       contactId: String(contactId ?? ''),
       cle: String(cle ?? ''),
       listings: listings as Listing[],
-      settings: getSettings(),
-      pdf: req.file.buffer,
+      settings,
+      pdfsParAnnonce,
       dossierTravail: TMP,
     });
-    console.log(`[erp] sélection publiée : ${resultat?.biens ?? '?'} bien(s)${resultat?.dejaPubliee ? ' (déjà publiée)' : ''}`);
+    console.log(`[erp] ${resultat?.biens ?? '?'} bien(s) déposé(s)${resultat?.dejaDeposes ? ' (déjà déposés)' : ''}`);
     res.json(resultat);
   } catch (e) {
     repondreErreurErp(res, e);

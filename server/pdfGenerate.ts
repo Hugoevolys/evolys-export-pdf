@@ -237,3 +237,31 @@ export async function generatePdf(info: GeneralInfo, listings: Listing[], s: Set
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 }
+
+/**
+ * Un PDF par annonce (espace client Evolys, 20/11/2026) : la page Evolys de
+ * l'annonce suivie des mentions légales, rattachée au bien dans les « Biens
+ * potentiels » du conseiller. Un seul navigateur pour toutes les annonces,
+ * chaque rendu écrit sur disque (même règle mémoire que generatePdf).
+ */
+export async function generatePdfsParAnnonce(info: GeneralInfo, listings: Listing[], s: Settings): Promise<Buffer[]> {
+  const advisor = `${info.advisorFirstName} ${info.advisorLastName}`;
+  const footer = htmlEscape(`${advisor} — ${info.advisorPhone} — ${info.advisorEmail} — Evolys`);
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+  });
+  try {
+    const pdfs: Buffer[] = [];
+    for (let i = 0; i < listings.length; i++) {
+      const l = listings[i];
+      const entries = await Promise.all(l.photos.map(async (p) => [p, await photoDataUri(p)] as const));
+      const section = listingHtml(l, i + 1, s, info.advisorFirstName, new Map(entries)) + legalHtml(info);
+      pdfs.push(await renderSection(browser, wrapDocument(section), footer));
+    }
+    return pdfs;
+  } finally {
+    await browser.close();
+  }
+}

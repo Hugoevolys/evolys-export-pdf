@@ -12,7 +12,7 @@ const fields: { key: keyof GeneralInfo; label: string; type?: string }[] = [
   { key: 'advisorAddress', label: 'Adresse professionnelle du conseiller' },
 ];
 
-/** « Autre acheteur » : saisie libre, sans publication dans un espace client. */
+/** « Autre acheteur » : saisie libre, sans ajout aux Biens potentiels. */
 export const ACHETEUR_LIBRE = '__autre__';
 
 export function GeneralInfoForm({
@@ -25,7 +25,7 @@ export function GeneralInfoForm({
   value: GeneralInfo;
   onChange: (v: GeneralInfo) => void;
   onNext: () => void;
-  /** Outil ouvert depuis l'espace conseiller : les acheteurs qui ont un espace client. */
+  /** Outil ouvert depuis l'espace conseiller : ses acheteurs en cours (les biens s'ajoutent à ses Biens potentiels). */
   acheteurs?: SessionEvolys['acheteurs'];
   onChoisirAcheteur?: (acheteur: SessionEvolys['acheteurs'][number] | null) => void;
 }) {
@@ -53,7 +53,7 @@ export function GeneralInfoForm({
                 {[a.prenom, a.nom].filter(Boolean).join(' ')}
               </option>
             ))}
-            <option value={ACHETEUR_LIBRE}>Autre acheteur (saisie libre, sans espace client)</option>
+            <option value={ACHETEUR_LIBRE}>Autre acheteur (saisie libre, sans Biens potentiels)</option>
           </select>
         </label>
       )}

@@ -56,23 +56,28 @@ async function postErp<T>(chemin: string, corps: unknown): Promise<T> {
 export const sessionEvolys = (jeton: string) => postErp<SessionEvolys>('session', { jeton });
 export const renouvelerJeton = (jeton: string) => postErp<{ jeton: string }>('renouveler', { jeton });
 
-export async function publierSelection(params: {
+/**
+ * Dépose les annonces dans les « Biens potentiels » du conseiller, rattachées à
+ * l'acheteur choisi (20/11/2026). Rien ne part chez le client.
+ */
+export async function deposerBiens(params: {
   jeton: string;
   contactId: string;
   cle: string;
   listings: Listing[];
-  pdf: Blob;
-}): Promise<{ selectionId: string; biens: number; dejaPubliee: boolean }> {
-  const fd = new FormData();
-  fd.append('donnees', JSON.stringify({ jeton: params.jeton, contactId: params.contactId, cle: params.cle, listings: params.listings }));
-  fd.append('pdf', params.pdf, 'selection.pdf');
+  generalInfo: GeneralInfo;
+}): Promise<{ biens: number; dejaDeposes: boolean }> {
   let r: Response;
   try {
-    r = await fetch(`${API}/api/erp/publier`, { method: 'POST', body: fd });
+    r = await fetch(`${API}/api/erp/deposer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
   } catch {
     throw new Error('Connexion au serveur impossible. Vérifie ta connexion et réessaie.');
   }
-  if (!r.ok) throw new Error(await errorOf(r, 'Publication échouée'));
+  if (!r.ok) throw new Error(await errorOf(r, 'Dépôt échoué'));
   return r.json();
 }
 

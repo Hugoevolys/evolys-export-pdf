@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { GeneralInfo, Listing, SessionEvolys, Settings, SplitReport } from '@/types';
-import { uploadPdf, generatePdf, getSettings, publierSelection, renouvelerJeton, sessionEvolys } from '@/lib/api';
+import { uploadPdf, generatePdf, getSettings, deposerBiens, renouvelerJeton, sessionEvolys } from '@/lib/api';
 import { listingProblems } from '@/lib/validate';
 import { ACHETEUR_LIBRE, GeneralInfoForm } from '@/components/GeneralInfoForm';
 import { ListingEditor } from '@/components/ListingEditor';
@@ -62,7 +62,7 @@ export default function App() {
   const [erreurSession, setErreurSession] = useState('');
   const [publier, setPublier] = useState(true);
   const [publication, setPublication] = useState<Publication>({ etat: 'aucune' });
-  const [envoi, setEnvoi] = useState<{ cle: string; pdf: Blob; listings: Listing[]; contactId: string } | null>(null);
+  const [envoi, setEnvoi] = useState<{ cle: string; listings: Listing[]; contactId: string; generalInfo: GeneralInfo } | null>(null);
 
   useEffect(() => {
     const j = lireJeton();
@@ -116,11 +116,12 @@ export default function App() {
     if (type) setListings((prev) => prev.map((l) => ({ ...l, mandateType: type, commissionOverride: undefined })));
   }
 
-  async function lancerPublication(e: { cle: string; pdf: Blob; listings: Listing[]; contactId: string }, prenom: string) {
+  // Dépôt dans les « Biens potentiels » du conseiller (20/11/2026) : rien ne part chez le client.
+  async function lancerPublication(e: { cle: string; listings: Listing[]; contactId: string; generalInfo: GeneralInfo }, prenom: string) {
     if (!jeton) return;
     setPublication({ etat: 'en-cours', prenom });
     try {
-      const r = await publierSelection({ jeton, contactId: e.contactId, cle: e.cle, listings: e.listings, pdf: e.pdf });
+      const r = await deposerBiens({ jeton, contactId: e.contactId, cle: e.cle, listings: e.listings, generalInfo: e.generalInfo });
       setPublication({ etat: 'ok', prenom, biens: r.biens });
     } catch (err: any) {
       setPublication({ etat: 'erreur', prenom, message: err.message });
@@ -171,10 +172,10 @@ export default function App() {
       const a = document.createElement('a');
       a.href = url; a.download = 'selection-evolys.pdf'; a.click();
       setStep('done');
-      // Le PDF est toujours téléchargé d'abord ; la publication part ensuite,
-      // à part : son échec ne touche jamais le PDF (ajout B d'Hugo).
+      // Le PDF est toujours téléchargé d'abord ; le dépôt dans les Biens potentiels
+      // part ensuite, à part : son échec ne touche jamais le PDF (ajout B d'Hugo).
       if (publicationPossible && publier) {
-        const e = { cle: crypto.randomUUID(), pdf: blob, listings, contactId: acheteurChoisi!.id };
+        const e = { cle: crypto.randomUUID(), listings, contactId: acheteurChoisi!.id, generalInfo: info };
         setEnvoi(e);
         void lancerPublication(e, acheteurChoisi!.prenom);
       } else {
@@ -363,7 +364,7 @@ export default function App() {
             {publicationPossible && current === listings.length - 1 && (
               <label className="mt-4 flex items-center justify-end gap-2 text-sm text-slate-700">
                 <input type="checkbox" checked={publier} onChange={(e) => setPublier(e.target.checked)} />
-                Publier dans l'espace client de {acheteurChoisi!.prenom}
+                Ajouter ces biens à mes « Biens potentiels », rattachés à {acheteurChoisi!.prenom}
               </label>
             )}
             {blocking.length > 0 && (
@@ -396,21 +397,21 @@ export default function App() {
             <h2 className="text-xl font-semibold mb-2">PDF généré ✅</h2>
             <p className="text-slate-500">Le fichier a été téléchargé. Tu peux relancer une nouvelle session.</p>
             {publication.etat === 'en-cours' && (
-              <p className="mt-4 text-sm text-slate-600">Publication dans l'espace client de {publication.prenom}…</p>
+              <p className="mt-4 text-sm text-slate-600">Ajout des biens à tes « Biens potentiels »…</p>
             )}
             {publication.etat === 'ok' && (
               <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-                Sélection publiée dans l'espace client de {publication.prenom} ({publication.biens} bien{publication.biens > 1 ? 's' : ''}).
-                {' '}{publication.prenom} reçoit un SMS, et les biens sont dans tes « Biens potentiels ».
+                {publication.biens} bien{publication.biens > 1 ? 's' : ''} ajouté{publication.biens > 1 ? 's' : ''} à tes « Biens potentiels », rattaché{publication.biens > 1 ? 's' : ''} à {publication.prenom}, avec le PDF de chaque annonce.
+                {' '}Rien n'est envoyé au client : choisis dans tes Biens potentiels ceux à mettre dans son espace.
               </p>
             )}
             {publication.etat === 'erreur' && (
               <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                Ton PDF est bien téléchargé, mais la sélection n'a pas pu être publiée dans l'espace de {publication.prenom} : {publication.message}
+                Ton PDF est bien téléchargé, mais les biens n'ont pas pu être ajoutés à tes « Biens potentiels » : {publication.message}
                 {envoi && (
                   <button onClick={() => lancerPublication(envoi, publication.prenom)}
                     className="mt-2 block mx-auto rounded-lg border border-red-300 px-3 py-1.5 hover:bg-red-100">
-                    Réessayer la publication
+                    Réessayer l'ajout
                   </button>
                 )}
               </div>
