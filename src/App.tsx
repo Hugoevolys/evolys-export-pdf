@@ -4,7 +4,7 @@ import { uploadPdf, generatePdf, getSettings, deposerBiens, renouvelerJeton, ses
 import { listingProblems } from '@/lib/validate';
 import { ACHETEUR_LIBRE, GeneralInfoForm } from '@/components/GeneralInfoForm';
 import { ListingEditor } from '@/components/ListingEditor';
-import { Upload, Loader2, FileDown, X, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Upload, Loader2, FileDown, X, ArrowRight, AlertTriangle, PenLine } from 'lucide-react';
 
 type Step = 'upload' | 'general' | 'listings' | 'done';
 
@@ -150,6 +150,27 @@ export default function App() {
     setLoading(false);
   }
 
+  // Annonce trouvée hors MoteurImmo (Meilleurs Agents, Leboncoin…) : fiche vide,
+  // complétée à l'étape des annonces (photos, titre, ville, prix, description).
+  function ajouterAnnonceManuelle() {
+    const notaryRate = settings?.notaryRate ?? 8.5;
+    const typeAcheteur = typeMandatOutil(acheteurChoisi?.typeMandat ?? null);
+    setListings((prev) => [...prev, {
+      id: crypto.randomUUID(),
+      title: '', city: '', postalCode: '',
+      surface: 0, rooms: 0, bedrooms: 0,
+      description: '', features: [],
+      netSellerPrice: 0,
+      mandateType: typeAcheteur ?? 'exclusif',
+      notaryRate, notaryOverride: 0, isNewBuild: false,
+      advisorComment: '', photos: [],
+      manuelle: true,
+    }]);
+  }
+
+  const ajouterPhotos = (id: string, chemins: string[]) =>
+    setListings((prev) => prev.map((l) => (l.id === id ? { ...l, photos: [...l.photos, ...chemins] } : l)));
+
   const removeListing = (id: string) =>
     setListings((prev) => prev.filter((l) => l.id !== id));
 
@@ -243,12 +264,21 @@ export default function App() {
                   }} />
               </label>
 
+              <button type="button" onClick={ajouterAnnonceManuelle} disabled={loading}
+                className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600
+                  hover:border-evolys hover:text-evolys transition-colors disabled:opacity-40
+                  flex items-center justify-center gap-2">
+                <PenLine className="h-4 w-4" />
+                Ajouter une annonce à la main
+                <span className="text-slate-400">(trouvée sur Meilleurs Agents, Leboncoin, SeLoger…)</span>
+              </button>
+
               {/* Compteur + liste des annonces importées */}
               <div className="mt-6 flex items-center gap-3">
                 <div className={`inline-flex items-center gap-2 font-semibold rounded-full px-4 py-2 transition-colors
                   ${listings.length ? 'bg-evolys text-white' : 'bg-slate-100 text-slate-400'}`}>
                   <span className="text-lg leading-none">{listings.length}</span>
-                  <span className="text-sm">annonce{listings.length > 1 ? 's' : ''} importée{listings.length > 1 ? 's' : ''}</span>
+                  <span className="text-sm">annonce{listings.length > 1 ? 's' : ''}</span>
                 </div>
                 {listings.length > 0 && (
                   <span className="text-sm text-slate-400">Vérifiez la liste avant de continuer</span>
@@ -278,13 +308,17 @@ export default function App() {
                       <span className="truncate flex items-center gap-3">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-evolys text-white text-xs shrink-0">{i + 1}</span>
                         <span className="truncate">
-                          <span className="font-medium text-slate-700">{l.title}</span>
-                          <span className="text-slate-400"> — {l.city} {l.postalCode}</span>
+                          <span className="font-medium text-slate-700">{l.title || 'Nouvelle annonce'}</span>
+                          {(l.city || l.postalCode) && <span className="text-slate-400"> — {l.city} {l.postalCode}</span>}
+                          {l.manuelle && <span className="text-slate-400"> · saisie à la main</span>}
                           <span className="text-slate-400"> · {l.photos.length} photo{l.photos.length > 1 ? 's' : ''}</span>
                           {l.splitWarning && (
                             <span className="block text-xs text-amber-600">⚠ {l.splitWarning}</span>
                           )}
-                          {listingProblems(l).length > 0 && (
+                          {l.manuelle && listingProblems(l).length > 0 && (
+                            <span className="block text-xs text-slate-500">À compléter à l'étape suivante : photos, titre, ville, prix et description</span>
+                          )}
+                          {!l.manuelle && listingProblems(l).length > 0 && (
                             <span className="block text-xs text-red-600">⚠ {listingProblems(l).join(' ; ')}</span>
                           )}
                         </span>
@@ -313,7 +347,7 @@ export default function App() {
                 className="mt-6 w-full px-4 py-3.5 rounded-xl bg-evolys text-white font-medium shadow-sm
                   hover:bg-evolys-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed
                   flex items-center justify-center gap-2">
-                J'ai fini de déposer mes annonces MoteurImmo
+                J'ai fini d'ajouter mes annonces
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -345,6 +379,7 @@ export default function App() {
               total={listings.length}
               settings={settings!}
               onChange={updateListing}
+              onAjouterPhotos={(chemins) => ajouterPhotos(listings[current].id, chemins)}
             />
             <div className="flex justify-between mt-4">
               <button disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}

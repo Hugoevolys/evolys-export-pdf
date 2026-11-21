@@ -47,6 +47,8 @@ export interface Listing {
   advisorComment: string;
   /** Chemins des photos source (insérées telles quelles, non modifiées). */
   photos: string[];
+  /** Annonce saisie à la main (trouvée hors MoteurImmo), pas lue dans un PDF. */
+  manuelle?: boolean;
   /** Découpage incertain (non bloquant) : le conseiller vérifie les photos. */
   splitWarning?: string;
 }

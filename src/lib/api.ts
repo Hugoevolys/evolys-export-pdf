@@ -30,6 +30,20 @@ export async function uploadPdf(file: File): Promise<{ uploadId: string; listing
   return r.json();
 }
 
+/** Photos d'une annonce ajoutée à la main : renvoie leurs chemins sur le serveur. */
+export async function uploadPhotos(files: File[]): Promise<string[]> {
+  const fd = new FormData();
+  files.forEach((f) => fd.append('photos', f));
+  let r: Response;
+  try {
+    r = await fetch(`${API}/api/photos`, { method: 'POST', body: fd });
+  } catch {
+    throw new Error('Connexion au serveur impossible. Vérifie ta connexion et réessaie.');
+  }
+  if (!r.ok) throw new Error(await errorOf(r, 'Envoi des photos échoué'));
+  return (await r.json()).photos;
+}
+
 export async function generatePdf(generalInfo: GeneralInfo, listings: Listing[]): Promise<Blob> {
   const r = await fetch(`${API}/api/generate`, {
     method: 'POST',

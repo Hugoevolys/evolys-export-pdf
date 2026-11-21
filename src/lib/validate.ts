@@ -10,7 +10,7 @@ export const DEFAULT_TITLE = 'Annonce';
 export function listingProblems(l: Listing): string[] {
   const problems: string[] = [];
   if (!l.title?.trim() || l.title.trim() === DEFAULT_TITLE || !l.city?.trim()) {
-    problems.push("l'outil n'a pas pu lire cette annonce (titre ou ville manquant) : retire-la ou redépose son PDF");
+    problems.push("titre ou ville manquant : renseigne-les ou retire l'annonce");
   }
   if (!(l.netSellerPrice > 0)) {
     problems.push('prix de vente à 0 € : renseigne-le');

@@ -4,6 +4,7 @@ import cors from 'cors';
 import multer from 'multer';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 
 import { splitPdf } from './pdfSplit.ts';
 import { extractListing } from './extract.ts';
@@ -18,7 +19,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'mandat-confiance-defaut'; // marqueur de version (vérif déploiement)
+const BUILD = 'annonce-manuelle'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');
@@ -56,6 +57,35 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
     console.error(e);
     res.status(500).json({ error: e.message });
   }
+});
+
+// 2) Photos d'une annonce ajoutée à la main (21/11/2026 : annonce trouvée hors
+//    MoteurImmo, ex. Meilleurs Agents). Rangées dans le dossier de travail, comme
+//    les photos extraites des PDF : même aperçu, même PDF, même dépôt ERP.
+const FORMATS_PHOTO: Record<string, string> = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+const uploadPhotos = multer({
+  dest: path.join(process.cwd(), 'server/uploads'),
+  limits: { fileSize: 15 * 1024 * 1024, files: 40 },
+});
+app.post('/api/photos', uploadPhotos.array('photos', 40), (req, res) => {
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  if (!files.length) return res.status(400).json({ error: 'Aucune photo reçue.' });
+  const refusees = files.filter((f) => !FORMATS_PHOTO[f.mimetype]);
+  if (refusees.length) {
+    files.forEach((f) => fs.rmSync(f.path, { force: true }));
+    return res.status(400).json({
+      error: `Format non pris en charge : ${refusees.map((f) => f.originalname).join(', ')}. Utilise des photos JPG, PNG ou WebP (une capture d'écran convient).`,
+    });
+  }
+  const dossier = path.join(TMP, `manuel-${randomUUID()}`);
+  fs.mkdirSync(dossier, { recursive: true });
+  const chemins = files.map((f, i) => {
+    const dest = path.join(dossier, `photo-${String(i + 1).padStart(2, '0')}${FORMATS_PHOTO[f.mimetype]}`);
+    fs.renameSync(f.path, dest);
+    return dest;
+  });
+  console.log(`[photos] ${chemins.length} photo(s) ajoutée(s) à la main`);
+  res.json({ photos: chemins });
 });
 
 // 3) Générer le PDF final

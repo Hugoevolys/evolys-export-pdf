@@ -63,17 +63,17 @@ function listingHtml(l: Listing, index: number, s: Settings, advisorFirstName: s
 
   return `
   <section class="listing">
-    <h2>Annonce ${index} — ${l.title}</h2>
-    <div class="loc">${l.city} ${l.postalCode ? '(' + l.postalCode + ')' : ''}</div>
+    <h2>Annonce ${index} — ${htmlEscape(l.title)}</h2>
+    <div class="loc">${htmlEscape(l.city)} ${l.postalCode ? '(' + htmlEscape(l.postalCode) + ')' : ''}</div>
     <!-- Texte d'abord, photos ensuite (retour client 16/11 : avec 20-30 photos, le texte
          arrivait trop loin). -->
     <div class="specs">
-      <span>${l.surface} m²</span><span>${l.rooms} pièces</span><span>${l.bedrooms} ch.</span>
+      ${l.surface ? `<span>${l.surface} m²</span>` : ''}${l.rooms ? `<span>${l.rooms} pièce${l.rooms > 1 ? 's' : ''}</span>` : ''}${l.bedrooms ? `<span>${l.bedrooms} ch.</span>` : ''}
       ${l.landSurface ? `<span>terrain ${l.landSurface} m²</span>` : ''}
       ${l.dpe ? `<span>DPE ${l.dpe}</span>` : ''}${l.ges ? `<span>GES ${l.ges}</span>` : ''}
     </div>
     <div class="chips">${features}</div>
-    <p class="desc">${l.description}</p>
+    <p class="desc">${htmlEscape(l.description)}</p>
     <table class="cost">
       <tr><td>Prix de vente</td><td>${euro(c.netSellerPrice)}</td></tr>
       <tr><td>Commission Evolys</td><td>${euro(c.commission)}</td></tr>
@@ -103,7 +103,7 @@ const PAGE_STYLE = `
     /* Hauteur bornée : 2 photos par page, sans grand blanc quand une photo haute ne tient plus. */
     .photo { max-width: 100%; max-height: 120mm; width: auto; height: auto; align-self: center; border-radius: 8px; break-inside: avoid; page-break-inside: avoid; }
     .specs span, .chip { display: inline-block; background: #DDF3FF; border-radius: 4px; padding: 3px 8px; margin: 2px; font-size: 12px; }
-    .desc { font-size: 13px; line-height: 1.5; margin: 12px 0; }
+    .desc { font-size: 13px; line-height: 1.5; margin: 12px 0; white-space: pre-line; }
     table.cost { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; break-inside: avoid; page-break-inside: avoid; }
     table.cost td { padding: 6px 8px; border-bottom: 1px solid #e3e9ee; }
     table.cost td:last-child { text-align: right; }

@@ -1,37 +1,82 @@
 import type { Listing, Settings, MandateType } from '@/types';
 import { computeGlobalCost, computeCommission, euro } from '@/lib/cost';
-import { fileUrl } from '@/lib/api';
-import { X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { fileUrl, uploadPhotos } from '@/lib/api';
+import { ImagePlus, Loader2, X } from 'lucide-react';
+
+const CLASSES_ENERGIE = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
 export function ListingEditor({
-  listing, index, total, settings, onChange,
+  listing, index, total, settings, onChange, onAjouterPhotos,
 }: {
   listing: Listing;
   index: number;
   total: number;
   settings: Settings;
   onChange: (l: Listing) => void;
+  /** Ajoute des photos à CETTE annonce (mise à jour par id : sûr même si on change d'annonce pendant l'envoi). */
+  onAjouterPhotos: (chemins: string[]) => void;
 }) {
   const cost = computeGlobalCost(listing, settings);
   const autoCommission = computeCommission({ ...listing, commissionOverride: undefined }, settings);
   const m = settings.mandates[listing.mandateType];
   const set = (patch: Partial<Listing>) => onChange({ ...listing, ...patch });
+  const [envoiPhotos, setEnvoiPhotos] = useState(false);
+  const [erreurPhotos, setErreurPhotos] = useState('');
+  useEffect(() => setErreurPhotos(''), [listing.id]);
+
+  async function ajouterPhotos(files: File[]) {
+    setEnvoiPhotos(true); setErreurPhotos('');
+    try {
+      const chemins = await uploadPhotos(files);
+      onAjouterPhotos(chemins);
+    } catch (e: any) {
+      setErreurPhotos(e.message);
+    } finally {
+      setEnvoiPhotos(false);
+    }
+  }
+
+  /** Champ numérique : vide = 0 (ou absent pour les champs facultatifs). */
+  const nombre = (v: string) => (v === '' ? 0 : Math.max(0, Number(v) || 0));
 
   return (
     <div className="bg-white rounded-xl shadow p-6">
       <div className="text-xs text-slate-400 mb-1">Annonce {index} / {total}</div>
-      <h2 className="text-lg font-semibold">{listing.title}</h2>
+      <h2 className="text-lg font-semibold">{listing.title || 'Nouvelle annonce'}</h2>
       <div className="text-sm text-slate-500 mb-4">{listing.city} {listing.postalCode}</div>
       {listing.splitWarning && (
         <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">⚠ {listing.splitWarning}</div>
+      )}
+
+      {listing.manuelle && (
+        <div className="mb-4 rounded-lg bg-evolys-light/40 p-3 text-sm text-slate-700">
+          Annonce ajoutée à la main : ajoute les photos (enregistrées depuis l'annonce ou en captures d'écran),
+          puis renseigne le titre, la ville, le prix et la description.
+        </div>
       )}
 
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-slate-600">
           Photos <span className="text-slate-400">({listing.photos.length})</span>
         </span>
-        <span className="text-xs text-slate-400">Survolez une photo et cliquez sur ✕ pour la retirer</span>
+        <span className="flex items-center gap-3">
+          {listing.photos.length > 0 && (
+            <span className="text-xs text-slate-400">Survolez une photo et cliquez sur ✕ pour la retirer</span>
+          )}
+          <label className={`inline-flex items-center gap-1 rounded-lg border border-evolys px-2.5 py-1 text-xs font-medium text-evolys
+            ${envoiPhotos ? 'opacity-50' : 'cursor-pointer hover:bg-evolys-light/30'}`}>
+            {envoiPhotos ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImagePlus className="h-3 w-3" />}
+            {envoiPhotos ? 'Envoi…' : 'Ajouter des photos'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" disabled={envoiPhotos}
+              onChange={(e) => {
+                if (e.target.files?.length) ajouterPhotos(Array.from(e.target.files));
+                e.target.value = '';
+              }} />
+          </label>
+        </span>
       </div>
+      {erreurPhotos && <div className="mb-2 rounded-lg bg-red-50 p-2 text-xs text-red-700">{erreurPhotos}</div>}
       <div className="grid grid-cols-4 gap-2 mb-4">
         {listing.photos.map((p, i) => (
           <div key={i} className="relative group">
@@ -67,6 +112,41 @@ export function ListingEditor({
           <span className="text-slate-600">Code postal</span>
           <input className="mt-1 w-full border rounded-lg px-3 py-2"
             value={listing.postalCode} onChange={(e) => set({ postalCode: e.target.value })} />
+        </label>
+        <label className="text-sm">
+          <span className="text-slate-600">Surface (m²)</span>
+          <input type="number" min={0} className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.surface || ''} onChange={(e) => set({ surface: nombre(e.target.value) })} />
+        </label>
+        <label className="text-sm">
+          <span className="text-slate-600">Pièces</span>
+          <input type="number" min={0} className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.rooms || ''} onChange={(e) => set({ rooms: nombre(e.target.value) })} />
+        </label>
+        <label className="text-sm">
+          <span className="text-slate-600">Chambres</span>
+          <input type="number" min={0} className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.bedrooms || ''} onChange={(e) => set({ bedrooms: nombre(e.target.value) })} />
+        </label>
+        <label className="text-sm">
+          <span className="text-slate-600">Terrain (m²)</span>
+          <input type="number" min={0} className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.landSurface || ''}
+            onChange={(e) => set({ landSurface: nombre(e.target.value) || undefined })} />
+        </label>
+        <label className="text-sm col-span-2">
+          <span className="text-slate-600">DPE</span>
+          <select className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.dpe ?? ''} onChange={(e) => set({ dpe: e.target.value || undefined })}>
+            {CLASSES_ENERGIE.map((c) => <option key={c} value={c}>{c || 'Non renseigné'}</option>)}
+          </select>
+        </label>
+        <label className="text-sm col-span-2">
+          <span className="text-slate-600">GES</span>
+          <select className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={listing.ges ?? ''} onChange={(e) => set({ ges: e.target.value || undefined })}>
+            {CLASSES_ENERGIE.map((c) => <option key={c} value={c}>{c || 'Non renseigné'}</option>)}
+          </select>
         </label>
         <label className="text-sm col-span-4">
           <span className="text-slate-600">Description</span>
