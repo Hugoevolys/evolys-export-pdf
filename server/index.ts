@@ -19,7 +19,7 @@ const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin.split(',') }));
 app.use(express.json({ limit: '50mb' }));
 
-const BUILD = 'annonce-manuelle'; // marqueur de version (vérif déploiement)
+const BUILD = 'saisie-manuelle-directe'; // marqueur de version (vérif déploiement)
 app.get('/health', (_req, res) => res.json({ status: 'ok', build: BUILD, ts: new Date().toISOString() }));
 
 const TMP = path.join(process.cwd(), 'server/tmp');

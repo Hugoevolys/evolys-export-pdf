@@ -54,6 +54,8 @@ export default function App() {
   const [current, setCurrent] = useState(0);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  /** Annonce manuelle en cours de saisie sur l'écran de dépôt (formulaire ouvert dès le clic). */
+  const [saisieId, setSaisieId] = useState<string | null>(null);
   useEffect(() => { getSettings().then(setSettings).catch(() => {}); }, []);
 
   // Espace client Evolys : rien de ceci n'est actif sans jeton.
@@ -155,8 +157,9 @@ export default function App() {
   function ajouterAnnonceManuelle() {
     const notaryRate = settings?.notaryRate ?? 8.5;
     const typeAcheteur = typeMandatOutil(acheteurChoisi?.typeMandat ?? null);
+    const id = crypto.randomUUID();
     setListings((prev) => [...prev, {
-      id: crypto.randomUUID(),
+      id,
       title: '', city: '', postalCode: '',
       surface: 0, rooms: 0, bedrooms: 0,
       description: '', features: [],
@@ -166,13 +169,20 @@ export default function App() {
       advisorComment: '', photos: [],
       manuelle: true,
     }]);
+    setSaisieId(id);
+    setTimeout(() => document.getElementById('saisie-manuelle')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
+
+  const majListing = (l: Listing) => setListings((prev) => prev.map((x) => (x.id === l.id ? l : x)));
+  const enSaisie = listings.find((l) => l.id === saisieId) ?? null;
 
   const ajouterPhotos = (id: string, chemins: string[]) =>
     setListings((prev) => prev.map((l) => (l.id === id ? { ...l, photos: [...l.photos, ...chemins] } : l)));
 
-  const removeListing = (id: string) =>
+  const removeListing = (id: string) => {
     setListings((prev) => prev.filter((l) => l.id !== id));
+    if (id === saisieId) setSaisieId(null);
+  };
 
   // Fusionne une annonce (sur-découpée) avec la précédente : ses photos sont
   // récupérées dans l'annonce précédente, puis elle est retirée. Aucune photo perdue.
@@ -264,6 +274,27 @@ export default function App() {
                   }} />
               </label>
 
+              {enSaisie && settings ? (
+                <div id="saisie-manuelle" className="mt-4 scroll-mt-4">
+                  <ListingEditor
+                    listing={enSaisie}
+                    index={listings.findIndex((l) => l.id === enSaisie.id) + 1}
+                    total={listings.length}
+                    settings={settings}
+                    onChange={majListing}
+                    onAjouterPhotos={(chemins) => ajouterPhotos(enSaisie.id, chemins)}
+                  />
+                  <div className="mt-3 flex items-center justify-end gap-3">
+                    {listingProblems(enSaisie).length > 0 && (
+                      <span className="text-xs text-slate-500">Tu pourras finir de la compléter plus tard.</span>
+                    )}
+                    <button type="button" onClick={() => setSaisieId(null)}
+                      className="rounded-xl bg-evolys px-4 py-2.5 text-sm font-medium text-white hover:bg-evolys-dark">
+                      Enregistrer cette annonce
+                    </button>
+                  </div>
+                </div>
+              ) : (
               <button type="button" onClick={ajouterAnnonceManuelle} disabled={loading}
                 className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600
                   hover:border-evolys hover:text-evolys transition-colors disabled:opacity-40
@@ -272,6 +303,7 @@ export default function App() {
                 Ajouter une annonce à la main
                 <span className="text-slate-400">(trouvée sur Meilleurs Agents, Leboncoin, SeLoger…)</span>
               </button>
+              )}
 
               {/* Compteur + liste des annonces importées */}
               <div className="mt-6 flex items-center gap-3">
@@ -316,7 +348,7 @@ export default function App() {
                             <span className="block text-xs text-amber-600">⚠ {l.splitWarning}</span>
                           )}
                           {l.manuelle && listingProblems(l).length > 0 && (
-                            <span className="block text-xs text-slate-500">À compléter à l'étape suivante : photos, titre, ville, prix et description</span>
+                            <span className="block text-xs text-slate-500">À compléter : {listingProblems(l).join(' ; ')}</span>
                           )}
                           {!l.manuelle && listingProblems(l).length > 0 && (
                             <span className="block text-xs text-red-600">⚠ {listingProblems(l).join(' ; ')}</span>
@@ -324,6 +356,12 @@ export default function App() {
                         </span>
                       </span>
                       <span className="ml-3 flex items-center gap-3 shrink-0">
+                        {l.manuelle && l.id !== saisieId && (
+                          <button onClick={() => { setSaisieId(l.id); setTimeout(() => document.getElementById('saisie-manuelle')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
+                            className="text-xs text-evolys underline whitespace-nowrap">
+                            {listingProblems(l).length ? 'Compléter' : 'Modifier'}
+                          </button>
+                        )}
                         {i > 0 && (
                           <button onClick={() => mergeWithPrevious(l.id)}
                             className="text-xs text-slate-500 hover:text-evolys underline whitespace-nowrap"
@@ -343,7 +381,7 @@ export default function App() {
 
               <button
                 disabled={listings.length === 0 || loading}
-                onClick={() => setStep('general')}
+                onClick={() => { setSaisieId(null); setStep('general'); }}
                 className="mt-6 w-full px-4 py-3.5 rounded-xl bg-evolys text-white font-medium shadow-sm
                   hover:bg-evolys-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed
                   flex items-center justify-center gap-2">
