@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "description": "Indexation annuelle de la base de prix travaux sur l'indice INSEE BT01 (Index du batiment, tous corps d'etat, base 2010, serie 001710986). Les prix de worksPriceBase.json et worksForfaits.json sont exprimes a la valeur de reference ci-dessous. Chaque 1er janvier de l'annee N, ils sont multiplies par BT01(septembre N-1) / BT01(reference). Le serveur va chercher la valeur chez l'INSEE si elle n'est pas listee ici ; 'valeurs' sert de secours si l'INSEE ne repond pas.",
+    "source": "https://bdm.insee.fr/series/sdmx/data/SERIES_BDM/001710986",
+    "mois_indice": 9,
+    "premiere_revision": 2027
+  },
+  "reference": { "mois": "2026-06", "valeur": 138.3, "note": "Grille calee en juin-juillet 2026" },
+  "valeurs": {
+    "2026-06": 138.3,
+    "2026-09": 139.1
+  }
+}

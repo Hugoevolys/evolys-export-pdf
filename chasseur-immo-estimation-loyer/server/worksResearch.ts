@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { WorksInput, WorksEstimate } from '../src/types/index.ts';
 import { WORKS_SYSTEM, buildWorksPrompt, COEF_PACK } from './worksPrompt.ts';
+import { getIndexationBt01, phraseIndexation } from './bt01.ts';
 
 /** Multiplie le 1er nombre d'une chaine 'pu' par un coefficient (ex "3 500 €/forfait" x1,3 -> "4 550 €/forfait"). */
 function scalePu(pu: string, c: number): string {
@@ -56,15 +57,19 @@ export async function worksResearch(input: WorksInput): Promise<WorksEstimate> {
 
   const data = parseJson(collectText(msg.content)) as WorksEstimate;
 
-  // Le modele chiffre en base ÉCONOMIQUE : on applique ICI le coef de pack (exact) sur
-  // chaque ligne travaux (jamais sur le bloc energie). Classique = x1,30, Prestige = x2,60.
+  // Le modele chiffre en base ÉCONOMIQUE, aux prix de la grille de reference : on applique ICI
+  // le coef de pack (Classique x1,30, Prestige x2,60) et l'indexation annuelle BT01, sur chaque
+  // ligne travaux (jamais sur le bloc energie, importe tel quel du DPE Wizard).
   const packCoef = COEF_PACK[input.standing] ?? 1;
-  if (packCoef !== 1 && Array.isArray(data.lines)) {
+  const bt01 = await getIndexationBt01();
+  const lineCoef = packCoef * bt01.coef;
+  if (lineCoef !== 1 && Array.isArray(data.lines)) {
     for (const l of data.lines) {
-      l.sousTotal = Math.round((Number(l.sousTotal) || 0) * packCoef);
-      if (l.pu) l.pu = scalePu(l.pu, packCoef);
+      l.sousTotal = Math.round((Number(l.sousTotal) || 0) * lineCoef);
+      if (l.pu) l.pu = scalePu(l.pu, lineCoef);
     }
   }
+  data.disclaimer = `Estimation indicative de coût de travaux, ce n'est pas un devis. ${phraseIndexation(bt01)}`;
 
   // Filet de securite : recale les totaux si l'IA derive (somme des lignes fait foi).
   const sum = Array.isArray(data.lines)

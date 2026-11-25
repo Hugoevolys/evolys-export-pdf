@@ -146,7 +146,7 @@ export const WORKS_SCHEMA_HINT = `{
     "Hors mobilier, electromenager, honoraires, diagnostics, desamiantage.",
     "Estimation indicative - a confirmer par devis d'artisans qualifies/RGE."
   ],
-  "disclaimer": "Estimation indicative de cout de travaux, ce n'est pas un devis. Base de prix 2025-2026 a actualiser."
+  "disclaimer": "Estimation indicative de cout de travaux, ce n'est pas un devis."
 }`;
 
 const KIND: Record<string, string> = {

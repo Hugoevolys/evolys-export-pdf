@@ -65,7 +65,7 @@ export function WorksTool({ onBack }: { onBack: () => void }) {
       </button>
       <div>
         <h2 className="font-title text-2xl text-navy">Estimation des travaux</h2>
-        <p className="text-sm text-slate-500 mt-1">Chiffrage détaillé par poste (base de prix 2025-2026, coefficient régional du code postal). Vise le juste prix du marché — pas un devis.</p>
+        <p className="text-sm text-slate-500 mt-1">Chiffrage détaillé par poste (base de prix indexée chaque année sur l'indice INSEE BT01, coefficient régional du code postal). Vise le juste prix du marché — pas un devis.</p>
       </div>
 
       {error && <div className="bg-red-50 text-red-700 rounded-lg p-3 text-sm">{error}</div>}
